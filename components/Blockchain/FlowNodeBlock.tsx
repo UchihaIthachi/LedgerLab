@@ -35,6 +35,7 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
       {/* Handles for incoming and outgoing connections */}
       <Handle type="target" position={Position.Left} style={{ background: '#555' }} />
       <Card
+        data-block-id={data.id} // Added data-block-id for tutorial targeting
         hoverable
         size="small"
         style={{

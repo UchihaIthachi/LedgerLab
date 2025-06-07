@@ -119,3 +119,10 @@ a {
     stroke-opacity: 1;
   }
 }
+
+.tutorial-highlight {
+  outline: 3px solid #1890ff; /* Ant Design blue */
+  box-shadow: 0 0 15px #1890ff;
+  transition: outline 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  border-radius: 4px; /* Optional: if highlighting cards etc. */
+}
