@@ -17,7 +17,10 @@ import {
   MAX_NONCE,
 } from '@/lib/blockchainUtils';
 
-const initialChainLength = 5;
+// Define constants for initial chain setup at a scope accessible by useEffect and handleResetChain
+const INITIAL_CHAIN_LENGTH = 5;
+const PRECALCULATED_NONCES = [6359, 19780, 10510, 13711, 36781];
+
 
 const BlockchainIndexPage: NextPage = () => {
   const { t } = useTranslation('common');
@@ -30,9 +33,9 @@ const BlockchainIndexPage: NextPage = () => {
   useEffect(() => {
     const newChain: BlockType[] = [];
     let previousHash = '0'.repeat(64);
-    const precalculatedNonces = [6359, 19780, 10510, 13711, 36781];
+    // Using PRECALCULATED_NONCES from the broader scope
 
-    for (let i = 0; i < initialChainLength; i++) {
+    for (let i = 0; i < INITIAL_CHAIN_LENGTH; i++) {
       const blockNumber = i + 1;
       const data = `Block ${blockNumber} Data`;
       let currentPreviousHash = previousHash;
@@ -43,7 +46,8 @@ const BlockchainIndexPage: NextPage = () => {
         blockNumber,
         data,
         currentPreviousHash, // Use potentially modified previousHash
-        data === `Block ${blockNumber} Data` ? precalculatedNonces[i] : undefined
+        // Use PRECALCULATED_NONCES, ensuring it matches length of INITIAL_CHAIN_LENGTH
+        (data === `Block ${blockNumber} Data` && PRECALCULATED_NONCES[i] !== undefined) ? PRECALCULATED_NONCES[i] : undefined
       );
       newChain.push(block);
       previousHash = block.currentHash; // Correctly set for the *next* block's previousHash
@@ -80,6 +84,36 @@ const BlockchainIndexPage: NextPage = () => {
         setSelectedBlock(updatedFullChain[blockIndex]);
       }
       return updatedFullChain;
+    });
+  };
+
+  const handleResetChain = () => {
+    Modal.confirm({
+      title: t('ConfirmResetChainTitle', 'Are you sure you want to reset the chain?'),
+      content: t('ConfirmResetChainContent', 'This will restore the blockchain to its initial state. All current changes will be lost.'),
+      okText: t('Reset', 'Reset'),
+      okType: 'danger',
+      cancelText: t('Cancel', 'Cancel'),
+      onOk: () => {
+        const newInitialChain: BlockType[] = [];
+        let previousHash = '0'.repeat(64);
+
+        for (let i = 0; i < INITIAL_CHAIN_LENGTH; i++) {
+          const blockNumber = i + 1;
+          const data = `Block ${blockNumber} Data`;
+          const block = createInitialBlock(
+            blockNumber,
+            data,
+            previousHash,
+            PRECALCULATED_NONCES[i]
+          );
+          newInitialChain.push(block);
+          previousHash = block.currentHash;
+        }
+        setChain(newInitialChain);
+        // Note: The deliberate invalid link for testing (if (i === 1)...) is NOT reapplied on reset,
+        // so the reset chain will be valid. This is generally desired for a reset function.
+      },
     });
   };
 
@@ -222,15 +256,23 @@ const BlockchainIndexPage: NextPage = () => {
       </Head>
       <div>
         <h1>{t('BlockchainViewTitle', 'Blockchain - Chain View')}</h1>
-        <WhiteboardWrapper chain={chain} onNodeClick={showModal} miningBlockId={currentMiningBlockId} onNodeRemove={handleRemoveBlock} /> {/* Pass chain, click handler, miningId and onNodeRemove */}
+        <WhiteboardWrapper
+          chain={chain}
+          onNodeClick={showModal}
+          miningBlockId={currentMiningBlockId}
+          onNodeRemove={handleRemoveBlock}
+          onAddBlock={handleAddBlock}
+          onResetChain={handleResetChain} // Add this prop
+        />
 
+        {/* Remove or comment out:
         <FloatButton
           icon={<PlusOutlined />}
           type="primary"
           tooltip={t('AddBlockTooltip', 'Add a new block to the end of the chain')}
           onClick={handleAddBlock}
-          style={{ right: 24, bottom: 100 }} // Adjust position as needed
-        />
+          style={{ right: 24, bottom: 100 }}
+        /> */}
 
         {/* Remove or comment out the old ArcherElement mapping:
         {chain.map((block, index) => (

@@ -12,7 +12,7 @@ import ReactFlow, {
   useReactFlow, // Import useReactFlow
 } from 'reactflow';
 import { Button } from 'antd'; // Import Button
-import { ExpandAltOutlined } from '@ant-design/icons'; // Import an icon
+import { ExpandAltOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'; // Import an icon & PlusOutlined, ReloadOutlined
 import 'reactflow/dist/style.css';
 import FlowNodeBlock, { FlowNodeBlockData } from './FlowNodeBlock'; // Adjust path as needed
 import CustomEdge, { CustomEdgeData } from './CustomEdge'; // Adjust path
@@ -33,9 +33,18 @@ interface WhiteboardCanvasProps {
   onNodeClick: (block: BlockType) => void;
   miningBlockId?: string | null; // ID of the block currently being mined
   onNodeRemove: (id: string) => void; // Added onNodeRemove
+  onAddBlock: () => void;           // New prop
+  onResetChain: () => void; // New prop
 }
 
-const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ chain, onNodeClick, miningBlockId, onNodeRemove }) => {
+const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
+  chain,
+  onNodeClick,
+  miningBlockId,
+  onNodeRemove,
+  onAddBlock, // Destructure new prop
+  onResetChain, // Destructure new prop
+}) => {
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeBlockData>([]); // Specify NodeData type
   const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdgeData>([]); // Specify EdgeData type for useEdgesState
   const { fitView } = useReactFlow(); // Get fitView function
@@ -148,16 +157,26 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ chain, onNodeClick,
         <div style={{
           position: 'absolute',
           top: '10px', // Adjust as needed
-          right: '10px', // Adjust to place near controls, or use Ant Design FloatButton for more flexibility
-          zIndex: 10 // Ensure it's above the canvas elements but potentially below modal
+          right: '10px', // Adjust to place near controls
+          zIndex: 10, // Ensure it's above the canvas elements but potentially below modal
+          display: 'flex', // Added for layout
+          gap: '8px' // Added for spacing between buttons
         }}>
           <Button
             icon={<ExpandAltOutlined />}
             onClick={handleFitView}
             title="Fit View" // Tooltip for the button
-          >
-            {/* Fit View */} {/* Optional text next to icon */}
-          </Button>
+          />
+          <Button
+            icon={<PlusOutlined />}
+            onClick={onAddBlock}
+            title="Add new block" // Static tooltip title
+          />
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={onResetChain}
+            title="Reset chain to initial state" // Static tooltip title
+          />
         </div>
       </ReactFlow>
     </div>
