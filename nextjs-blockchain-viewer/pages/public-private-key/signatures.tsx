@@ -141,7 +141,7 @@ const SignaturesPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>{t('SignaturesTitle', 'Digital Signatures')} - {t('Blockchain Demo')}</title>
+        <title>{String(t('SignaturesTitle', 'Digital Signatures'))} - {String(t('Blockchain Demo'))}</title>
       </Head>
       <div>
         <Title level={2}>{t('SignaturesPageTitle', 'Create & Verify Digital Signatures')}</Title>

@@ -3,8 +3,9 @@ import { NextPage } from 'next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
-import { Row, Col, Typography, Space } from 'antd'; // Added Typography for Peer titles
+import { Row, Col, Typography, Space, Modal, Button as AntButton } from 'antd'; // Added Modal, AntButton
 import BlockCard from '@/components/Blockchain/BlockCard';
+import CompactBlockCard from '@/components/Blockchain/CompactBlockCard'; // Added CompactBlockCard
 import {
   BlockType,
   calculateHash,
@@ -15,8 +16,8 @@ import {
 
 const { Title } = Typography;
 
-const initialChainLength = 5; // Or make it smaller for this view, e.g., 3 for brevity
-const peerIds = ['Peer A', 'Peer B', 'Peer C']; // Example peer IDs
+const initialChainLength = 5;
+const peerIds = ['Peer A', 'Peer B', 'Peer C'];
 
 interface Peer {
   peerId: string;
@@ -26,22 +27,21 @@ interface Peer {
 const DistributedPage: NextPage = () => {
   const { t } = useTranslation('common');
   const [peers, setPeers] = useState<Peer[]>([]);
-  // Mining states will be keyed like `${peerId}-${blockId}`
   const [miningStates, setMiningStates] = useState<{[key: string]: boolean}>({});
 
-  // Initialize chains for all peers
+  // Modal State
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedBlock, setSelectedBlock] = useState<BlockType | null>(null);
+  const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
+
   useEffect(() => {
     const newPeers: Peer[] = peerIds.map(id => {
       const newChain: BlockType[] = [];
       let previousHash = '0'.repeat(64);
-      // Pre-calculated nonces for simple data to speed up initialization
-      // These would need to be found if data or DIFFICULTY changes
-      // Using the same set for each peer initially for identical starting chains
       const precalculatedNonces = [6359, 19780, 10510, 13711, 36781];
-
       for (let i = 0; i < initialChainLength; i++) {
         const blockNumber = i + 1;
-        const data = `Block ${blockNumber} Data`; // Simple initial data for each peer
+        const data = `Block ${blockNumber} Data`;
         const block = createInitialBlock(
           blockNumber,
           data,
@@ -56,12 +56,13 @@ const DistributedPage: NextPage = () => {
     setPeers(newPeers);
   }, []);
 
-  // This function updates a single chain and returns its new state.
   const getUpdatedChain = (chain: BlockType[], startIndex: number): BlockType[] => {
-    const updatedChain = [...chain]; // Create a mutable copy
+    const updatedChain = [...chain];
     for (let i = startIndex; i < updatedChain.length; i++) {
       if (i > 0) {
         updatedChain[i].previousHash = updatedChain[i - 1].currentHash;
+      } else {
+        updatedChain[i].previousHash = "0".repeat(64);
       }
       updatedChain[i].currentHash = calculateHash(
         updatedChain[i].blockNumber,
@@ -74,104 +75,133 @@ const DistributedPage: NextPage = () => {
     return updatedChain;
   };
 
-  const handleDataChange = (peerId: string, blockId: string, newData: string) => {
+  const updatePeerChainAndSelectedBlock = (
+    peerId: string,
+    blockId: string,
+    chainUpdateLogic: (chain: BlockType[]) => BlockType[]
+  ) => {
     setPeers(currentPeers =>
       currentPeers.map(peer => {
         if (peer.peerId === peerId) {
           const blockIndex = peer.chain.findIndex(b => b.id === blockId);
           if (blockIndex === -1) return peer;
 
-          const newChain = [...peer.chain];
-          newChain[blockIndex] = { ...newChain[blockIndex], data: newData };
-          return { ...peer, chain: getUpdatedChain(newChain, blockIndex) };
+          const updatedPeerChain = chainUpdateLogic([...peer.chain]);
+
+          if (selectedBlock && selectedBlock.id === blockId && selectedPeerId === peerId) {
+            setSelectedBlock(updatedPeerChain.find(b => b.id === blockId) || null);
+          }
+          return { ...peer, chain: updatedPeerChain };
         }
         return peer;
       })
     );
   };
 
+  const handleDataChange = (peerId: string, blockId: string, newData: string) => {
+    updatePeerChainAndSelectedBlock(peerId, blockId, (currentChain) => {
+      const blockIndex = currentChain.findIndex(b => b.id === blockId);
+      currentChain[blockIndex] = { ...currentChain[blockIndex], data: newData };
+      return getUpdatedChain(currentChain, blockIndex);
+    });
+  };
+
   const handleNonceChange = (peerId: string, blockId: string, newNonceValue: string | number | null | undefined) => {
     const newNonce = Number(newNonceValue ?? 0);
-    setPeers(currentPeers =>
-      currentPeers.map(peer => {
-        if (peer.peerId === peerId) {
-          const blockIndex = peer.chain.findIndex(b => b.id === blockId);
-          if (blockIndex === -1) return peer;
-
-          const newChain = [...peer.chain];
-          newChain[blockIndex] = { ...newChain[blockIndex], nonce: newNonce };
-          return { ...peer, chain: getUpdatedChain(newChain, blockIndex) };
-        }
-        return peer;
-      })
-    );
+    updatePeerChainAndSelectedBlock(peerId, blockId, (currentChain) => {
+      const blockIndex = currentChain.findIndex(b => b.id === blockId);
+      currentChain[blockIndex] = { ...currentChain[blockIndex], nonce: newNonce };
+      return getUpdatedChain(currentChain, blockIndex);
+    });
   };
 
   const handleMine = useCallback(async (peerId: string, blockId: string) => {
     const miningKey = `${peerId}-${blockId}`;
     setMiningStates(prev => ({ ...prev, [miningKey]: true }));
-    await new Promise(resolve => setTimeout(resolve, 0)); // UI update
+    await new Promise(resolve => setTimeout(resolve, 0));
 
-    setPeers(currentPeers =>
-      currentPeers.map(peer => {
-        if (peer.peerId === peerId) {
-          const blockIndex = peer.chain.findIndex(b => b.id === blockId);
-          if (blockIndex === -1) return peer;
-
-          const newChain = [...peer.chain];
-          const blockToMine = newChain[blockIndex];
-
-          let foundNonce = blockToMine.nonce;
-          for (let i = 0; i <= MAX_NONCE; i++) { // Consider reducing MAX_NONCE for quicker demo in distributed view
-            const hash = calculateHash(blockToMine.blockNumber, i, blockToMine.data, blockToMine.previousHash);
-            if (checkValidity(hash)) {
-              foundNonce = i;
-              break;
-            }
-          }
-          newChain[blockIndex] = { ...blockToMine, nonce: foundNonce };
-          const finalUpdatedChain = getUpdatedChain(newChain, blockIndex);
-          setMiningStates(prev => ({ ...prev, [miningKey]: false }));
-          return { ...peer, chain: finalUpdatedChain };
+    updatePeerChainAndSelectedBlock(peerId, blockId, (currentChain) => {
+      const blockIndex = currentChain.findIndex(b => b.id === blockId);
+      const blockToMine = currentChain[blockIndex];
+      let foundNonce = blockToMine.nonce;
+      for (let i = 0; i <= MAX_NONCE; i++) {
+        const hash = calculateHash(blockToMine.blockNumber, i, blockToMine.data, blockToMine.previousHash);
+        if (checkValidity(hash)) {
+          foundNonce = i;
+          break;
         }
-        return peer;
-      })
-    );
-  }, []);
+      }
+      currentChain[blockIndex] = { ...blockToMine, nonce: foundNonce };
+      setMiningStates(prev => ({ ...prev, [miningKey]: false }));
+      return getUpdatedChain(currentChain, blockIndex);
+    });
+  }, [selectedPeerId, selectedBlock]); // Dependencies for useCallback
 
+  const showBlockModal = (peer: Peer, block: BlockType) => {
+    setSelectedPeerId(peer.peerId);
+    setSelectedBlock(block);
+    setIsModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    setSelectedBlock(null);
+    setSelectedPeerId(null);
+  };
 
   return (
     <>
       <Head>
-        <title>{t('Distributed', 'Distributed')} - {t('Blockchain Demo')}</title>
+        <title>{String(t('Distributed', 'Distributed'))} - {String(t('Blockchain Demo'))}</title>
       </Head>
       <div>
         <h1>{t('DistributedViewTitle', 'Blockchain - Distributed View')}</h1>
-        <Row gutter={[16, 16]}> {/* Gutters for spacing between peer columns */}
+        <Row gutter={[16, 16]}>
           {peers.map(peer => (
-            <Col key={peer.peerId} xs={24} md={12} lg={8}> {/* Responsive columns for peers */}
-              <Title level={3} style={{ textAlign: 'center' }}>{t(peer.peerId, peer.peerId)}</Title> {/* Allow peerId to be translated */}
-              <Space direction="vertical" style={{ width: '100%' }}>
-                {peer.chain.map((block, index) => (
-                  <BlockCard
-                    key={`${peer.peerId}-${block.id}`}
-                    blockNumber={block.blockNumber}
-                    nonce={block.nonce}
-                    data={block.data}
-                    previousHash={block.previousHash}
-                    currentHash={block.currentHash}
-                    isValid={block.isValid}
-                    onDataChange={(e) => handleDataChange(peer.peerId, block.id, e.target.value)}
-                    onNonceChange={(value) => handleNonceChange(peer.peerId, block.id, value)}
-                    onMine={() => handleMine(peer.peerId, block.id)}
-                    isMining={miningStates[`${peer.peerId}-${block.id}`] || false}
-                    isFirstBlock={index === 0}
-                  />
+            <Col key={peer.peerId} xs={24} md={12} lg={8}>
+              <Title level={3} style={{ textAlign: 'center' }}>{t(peer.peerId, peer.peerId)}</Title>
+              <div style={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', padding: '10px 0', WebkitOverflowScrolling: 'touch' }}>
+                {peer.chain.map((block) => (
+                  <div key={`${peer.peerId}-${block.id}`} style={{ marginRight: '10px', flexShrink: 0 }}>
+                    <CompactBlockCard
+                      blockNumber={block.blockNumber}
+                      currentHash={block.currentHash}
+                      previousHash={block.previousHash}
+                      isValid={block.isValid}
+                      onClick={() => showBlockModal(peer, block)}
+                    />
+                  </div>
                 ))}
-              </Space>
+              </div>
             </Col>
           ))}
         </Row>
+
+        {selectedBlock && selectedPeerId && (
+          <Modal
+            title={`${t('DistributedBlockDetails', 'Distributed Block Details')} - ${t('Peer', 'Peer')} ${selectedPeerId} - ${t('Block', 'Block')} #${selectedBlock.blockNumber}`}
+            visible={isModalVisible}
+            onOk={handleModalClose}
+            onCancel={handleModalClose}
+            width={800}
+            footer={[ <AntButton key="close" onClick={handleModalClose}> {t('CloseButton', 'Close')} </AntButton> ]}
+          >
+            <BlockCard
+              blockNumber={selectedBlock.blockNumber}
+              nonce={selectedBlock.nonce}
+              data={selectedBlock.data}
+              // No specific dataType like 'transactions' or 'coinbase' here, defaults to string or generic data
+              previousHash={selectedBlock.previousHash}
+              currentHash={selectedBlock.currentHash}
+              isValid={selectedBlock.isValid}
+              onDataChange={(e) => handleDataChange(selectedPeerId, selectedBlock.id, e.target.value)}
+              onNonceChange={(value) => handleNonceChange(selectedPeerId, selectedBlock.id, value)}
+              onMine={() => handleMine(selectedPeerId, selectedBlock.id)}
+              isMining={ miningStates[`${selectedPeerId}-${selectedBlock.id}`] || false }
+              isFirstBlock={selectedBlock.blockNumber === 1}
+            />
+          </Modal>
+        )}
       </div>
     </>
   );

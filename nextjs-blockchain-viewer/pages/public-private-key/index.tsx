@@ -20,7 +20,7 @@ const PKIndexPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>{t('PPKSectionTitle', 'Public/Private Key Cryptography')} - {t('Blockchain Demo')}</title>
+        <title>{String(t('PPKSectionTitle', 'Public/Private Key Cryptography'))} - {String(t('Blockchain Demo'))}</title>
       </Head>
       <div>
         <Title level={2}>{t('PPKSectionTitle', 'Public/Private Key Cryptography')}</Title>

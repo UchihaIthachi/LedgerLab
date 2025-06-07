@@ -11,8 +11,10 @@ import {
   Input,
   Button as AntButton,
   Card,
-} from "antd"; // Added Input, AntButton for tx editing
+  Modal, // Added Modal
+} from "antd";
 import BlockCard from "@/components/Blockchain/BlockCard";
+import CompactBlockCard from "@/components/Blockchain/CompactBlockCard"; // Added CompactBlockCard
 import {
   BlockType,
   TransactionType,
@@ -24,7 +26,7 @@ import {
 
 const { Title, Text } = Typography;
 
-const initialChainLength = 3; // Keep it shorter for this view
+const initialChainLength = 3;
 const peerIds = ["Peer A", "Peer B", "Peer C"];
 
 interface Peer {
@@ -32,7 +34,6 @@ interface Peer {
   chain: BlockType[];
 }
 
-// Sample initial transactions for the first block of each peer
 const getInitialTransactions = (
   blockNum: number,
   peerInitial: string
@@ -54,33 +55,25 @@ const getInitialTransactions = (
 const TokensPage: NextPage = () => {
   const { t } = useTranslation("common");
   const [peers, setPeers] = useState<Peer[]>([]);
-  const [miningStates, setMiningStates] = useState<{ [key: string]: boolean }>(
-    {}
-  );
-  // State to manage input fields for transactions, if direct editing in page is preferred
+  const [miningStates, setMiningStates] = useState<{ [key: string]: boolean }>({});
   const [editingTxState, setEditingTxState] = useState<{
     [txId: string]: Partial<TransactionType>;
   }>({});
 
+  // Modal State
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedBlock, setSelectedBlock] = useState<BlockType | null>(null);
+  const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
+
   useEffect(() => {
     const newPeers: Peer[] = peerIds.map((id, peerIndex) => {
-      const peerInitial = String.fromCharCode(65 + peerIndex); // A, B, C
+      const peerInitial = String.fromCharCode(65 + peerIndex);
       const newChain: BlockType[] = [];
       let previousHash = "0".repeat(64);
-
-      // For tokens, initial nonces will likely be different due to different data (transactions)
-      // We will let createInitialBlock attempt to mine them or use 0.
-      // const precalculatedNonces = [2075, 383, 160]; // Example if data was fixed & simple
-
       for (let i = 0; i < initialChainLength; i++) {
         const blockNumber = i + 1;
         const transactions = getInitialTransactions(blockNumber, peerInitial);
-        const block = createInitialBlock(
-          blockNumber,
-          transactions,
-          previousHash
-          // nonce for block with transactions will be different, let createInitialBlock find it or default
-        );
+        const block = createInitialBlock(blockNumber, transactions, previousHash);
         newChain.push(block);
         previousHash = block.currentHash;
       }
@@ -89,24 +82,46 @@ const TokensPage: NextPage = () => {
     setPeers(newPeers);
   }, []);
 
-  const getUpdatedChain = (
-    chain: BlockType[],
-    startIndex: number
-  ): BlockType[] => {
+  const getUpdatedChain = (chain: BlockType[], startIndex: number): BlockType[] => {
     const updatedChain = [...chain];
     for (let i = startIndex; i < updatedChain.length; i++) {
       if (i > 0) {
         updatedChain[i].previousHash = updatedChain[i - 1].currentHash;
+      } else {
+        updatedChain[i].previousHash = "0".repeat(64);
       }
       updatedChain[i].currentHash = calculateHash(
         updatedChain[i].blockNumber,
         updatedChain[i].nonce,
-        updatedChain[i].data, // data is TransactionType[]
+        updatedChain[i].data,
         updatedChain[i].previousHash
       );
       updatedChain[i].isValid = checkValidity(updatedChain[i].currentHash);
     }
     return updatedChain;
+  };
+
+  const updatePeerChainAndSelectedBlock = (
+    peerId: string,
+    blockId: string,
+    chainUpdateLogic: (chain: BlockType[]) => BlockType[]
+  ) => {
+    setPeers((currentPeers) =>
+      currentPeers.map((peer) => {
+        if (peer.peerId === peerId) {
+          const blockIndex = peer.chain.findIndex((b) => b.id === blockId);
+          if (blockIndex === -1) return peer;
+
+          const updatedPeerChain = chainUpdateLogic([...peer.chain]);
+
+          if (selectedBlock && selectedBlock.id === blockId && selectedPeerId === peerId) {
+            setSelectedBlock(updatedPeerChain.find(b => b.id === blockId) || null);
+          }
+          return { ...peer, chain: updatedPeerChain };
+        }
+        return peer;
+      })
+    );
   };
 
   const handleNonceChange = (
@@ -115,55 +130,11 @@ const TokensPage: NextPage = () => {
     newNonceValue: string | number | null | undefined
   ) => {
     const newNonce = Number(newNonceValue ?? 0);
-    setPeers((currentPeers) =>
-      currentPeers.map((peer) => {
-        if (peer.peerId === peerId) {
-          const blockIndex = peer.chain.findIndex((b) => b.id === blockId);
-          if (blockIndex === -1) return peer;
-          const newChain = [...peer.chain];
-          newChain[blockIndex] = { ...newChain[blockIndex], nonce: newNonce };
-          return { ...peer, chain: getUpdatedChain(newChain, blockIndex) };
-        }
-        return peer;
-      })
-    );
-  };
-
-  const handleTransactionFieldChange = (
-    peerId: string,
-    blockId: string,
-    txId: string,
-    field: keyof Omit<TransactionType, "id" | "timestamp">, // Allow editing 'from', 'to', 'value'
-    newValue: string
-  ) => {
-    setPeers((currentPeers) =>
-      currentPeers.map((peer) => {
-        if (peer.peerId === peerId) {
-          const blockIndex = peer.chain.findIndex((b) => b.id === blockId);
-          if (blockIndex === -1) return peer;
-
-          const newChain = [...peer.chain];
-          const blockToUpdate = { ...newChain[blockIndex] };
-
-          if (Array.isArray(blockToUpdate.data)) {
-            const txIndex = blockToUpdate.data.findIndex(
-              (tx) => tx.id === txId
-            );
-            if (txIndex === -1) return peer; // Transaction not found
-
-            const updatedTransactions = [...blockToUpdate.data];
-            updatedTransactions[txIndex] = {
-              ...updatedTransactions[txIndex],
-              [field]: newValue,
-            };
-            blockToUpdate.data = updatedTransactions;
-            newChain[blockIndex] = blockToUpdate;
-            return { ...peer, chain: getUpdatedChain(newChain, blockIndex) };
-          }
-        }
-        return peer;
-      })
-    );
+    updatePeerChainAndSelectedBlock(peerId, blockId, (currentChain) => {
+      const blockIndex = currentChain.findIndex((b) => b.id === blockId);
+      currentChain[blockIndex] = { ...currentChain[blockIndex], nonce: newNonce };
+      return getUpdatedChain(currentChain, blockIndex);
+    });
   };
 
   const handleMine = useCallback(async (peerId: string, blockId: string) => {
@@ -171,44 +142,25 @@ const TokensPage: NextPage = () => {
     setMiningStates((prev) => ({ ...prev, [miningKey]: true }));
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    setPeers((currentPeers) =>
-      currentPeers.map((peer) => {
-        if (peer.peerId === peerId) {
-          const blockIndex = peer.chain.findIndex((b) => b.id === blockId);
-          if (blockIndex === -1) return peer;
-          const newChain = [...peer.chain];
-          const blockToMine = newChain[blockIndex];
-          let foundNonce = 0;
-          for (let i = 0; i <= MAX_NONCE; i++) {
-            if (
-              checkValidity(
-                calculateHash(
-                  blockToMine.blockNumber,
-                  i,
-                  blockToMine.data,
-                  blockToMine.previousHash
-                )
-              )
-            ) {
-              foundNonce = i;
-              break;
-            }
-          }
-          newChain[blockIndex] = { ...blockToMine, nonce: foundNonce };
-          const finalUpdatedChain = getUpdatedChain(newChain, blockIndex);
-          setMiningStates((prev) => ({ ...prev, [miningKey]: false }));
-          return { ...peer, chain: finalUpdatedChain };
+    updatePeerChainAndSelectedBlock(peerId, blockId, (currentChain) => {
+      const blockIndex = currentChain.findIndex((b) => b.id === blockId);
+      const blockToMine = currentChain[blockIndex];
+      let foundNonce = 0;
+      for (let i = 0; i <= MAX_NONCE; i++) {
+        if (checkValidity(calculateHash(blockToMine.blockNumber, i, blockToMine.data, blockToMine.previousHash))) {
+          foundNonce = i;
+          break;
         }
-        return peer;
-      })
-    );
-  }, []);
+      }
+      currentChain[blockIndex] = { ...blockToMine, nonce: foundNonce };
+      setMiningStates((prev) => ({ ...prev, [miningKey]: false }));
+      return getUpdatedChain(currentChain, blockIndex);
+    });
+  }, [selectedPeerId, selectedBlock]); // Dependencies for useCallback
 
-  // Simplified input change handler for transaction fields shown directly on the page
-  // This is an alternative to more complex state management for inputs inside BlockCard
   const handleTxInputChange = (
     txId: string,
-    field: keyof TransactionType,
+    field: keyof Omit<TransactionType, "id" | "timestamp">,
     value: string
   ) => {
     setEditingTxState((prev) => ({
@@ -217,56 +169,47 @@ const TokensPage: NextPage = () => {
     }));
   };
 
-  // Apply changes from editingTxState to the actual chain state
   const applyTxChanges = (peerId: string, blockId: string, txId: string) => {
     const changes = editingTxState[txId];
     if (!changes) return;
-
-    let finalValue = changes.value; // Keep as string if that's what input provides
-
-    setPeers((currentPeers) =>
-      currentPeers.map((peer) => {
-        if (peer.peerId === peerId) {
-          const blockIndex = peer.chain.findIndex((b) => b.id === blockId);
-          if (blockIndex === -1) return peer;
-
-          const newChain = [...peer.chain];
-          const blockToUpdate = { ...newChain[blockIndex] };
-
-          if (Array.isArray(blockToUpdate.data)) {
-            const txIndex = blockToUpdate.data.findIndex(
-              (tx) => tx.id === txId
-            );
-            if (txIndex === -1) return peer;
-
-            const updatedTransactions = [...blockToUpdate.data];
-            updatedTransactions[txIndex] = {
-              ...updatedTransactions[txIndex],
-              from: changes.from ?? updatedTransactions[txIndex].from,
-              to: changes.to ?? updatedTransactions[txIndex].to,
-              value: finalValue ?? updatedTransactions[txIndex].value,
-            };
-            blockToUpdate.data = updatedTransactions;
-            newChain[blockIndex] = blockToUpdate;
-            // Clear editing state for this tx after applying
-            setEditingTxState((prev) => {
-              const newState = { ...prev };
-              delete newState[txId];
-              return newState;
-            });
-            return { ...peer, chain: getUpdatedChain(newChain, blockIndex) };
-          }
+    updatePeerChainAndSelectedBlock(peerId, blockId, (currentChain) => {
+      const blockIndex = currentChain.findIndex((b) => b.id === blockId);
+      const blockToUpdate = { ...currentChain[blockIndex] };
+      if (Array.isArray(blockToUpdate.data)) {
+        const txIndex = blockToUpdate.data.findIndex((tx) => tx.id === txId);
+        if (txIndex !== -1) {
+          const updatedTransactions = [...blockToUpdate.data];
+          updatedTransactions[txIndex] = { ...updatedTransactions[txIndex], ...changes };
+          blockToUpdate.data = updatedTransactions;
+          currentChain[blockIndex] = blockToUpdate;
+          setEditingTxState((prev) => { const newState = { ...prev }; delete newState[txId]; return newState; });
         }
-        return peer;
-      })
-    );
+      }
+      return getUpdatedChain(currentChain, blockIndex);
+    });
+  };
+
+  const showBlockModal = (peer: Peer, block: BlockType) => {
+    setSelectedPeerId(peer.peerId);
+    setSelectedBlock(block);
+    // Reset editing state when opening a new block, or load existing if any
+    // For simplicity, reset here. A more complex state might persist edits.
+    setEditingTxState({});
+    setIsModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    setSelectedBlock(null);
+    setSelectedPeerId(null);
+    setEditingTxState({}); // Clear editing state on modal close
   };
 
   return (
     <>
       <Head>
         <title>
-          {t("Tokens", "Tokens")} - {t("Blockchain Demo")}
+          {String(t("Tokens", "Tokens"))} - {String(t("Blockchain Demo"))}
         </title>
       </Head>
       <div>
@@ -277,93 +220,69 @@ const TokensPage: NextPage = () => {
               <Title level={4} style={{ textAlign: "center" }}>
                 {t(peer.peerId, peer.peerId)}
               </Title>
-              <Space direction="vertical" style={{ width: "100%" }}>
-                {peer.chain.map((block, index) => (
-                  <div key={`${peer.peerId}-${block.id}`}>
-                    <BlockCard
+              <div style={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', padding: '10px 0', WebkitOverflowScrolling: 'touch' }}>
+                {peer.chain.map((block) => (
+                  <div key={`${peer.peerId}-${block.id}`} style={{ marginRight: '10px', flexShrink: 0 }}>
+                    <CompactBlockCard
                       blockNumber={block.blockNumber}
-                      nonce={block.nonce}
-                      data={block.data} // Pass TransactionType[]
-                      dataType="transactions" // Specify dataType
-                      previousHash={block.previousHash}
                       currentHash={block.currentHash}
+                      previousHash={block.previousHash}
                       isValid={block.isValid}
-                      onNonceChange={(value) =>
-                        handleNonceChange(peer.peerId, block.id, value)
-                      }
-                      onMine={() => handleMine(peer.peerId, block.id)}
-                      isMining={
-                        miningStates[`${peer.peerId}-${block.id}`] || false
-                      }
-                      isFirstBlock={index === 0}
-                      // onTransactionFieldChange is not used directly by BlockCard's internal inputs for now
+                      onClick={() => showBlockModal(peer, block)}
                     />
-                    {/* Example of rendering editable transaction inputs below the card */}
-                    {Array.isArray(block.data) &&
-                      block.data.map((tx) => (
-                        <Card
-                          size="small"
-                          key={`${tx.id}-edit`}
-                          style={{
-                            marginTop: "5px",
-                            backgroundColor: "#fafafa",
-                          }}
-                        >
-                          <Space direction="vertical" style={{ width: "100%" }}>
-                            <Text strong>
-                              {t("EditTransaction", "Edit Tx")}:{" "}
-                              {tx.id.substring(0, 8)}...
-                            </Text>
-                            <Input
-                              addonBefore={t("From")}
-                              value={editingTxState[tx.id]?.from ?? tx.from}
-                              onChange={(e) =>
-                                handleTxInputChange(
-                                  tx.id,
-                                  "from",
-                                  e.target.value
-                                )
-                              }
-                            />
-                            <Input
-                              addonBefore={t("To")}
-                              value={editingTxState[tx.id]?.to ?? tx.to}
-                              onChange={(e) =>
-                                handleTxInputChange(tx.id, "to", e.target.value)
-                              }
-                            />
-                            <Input
-                              addonBefore={t("Value")}
-                              value={
-                                editingTxState[tx.id]?.value?.toString() ??
-                                tx.value.toString()
-                              }
-                              onChange={(e) =>
-                                handleTxInputChange(
-                                  tx.id,
-                                  "value",
-                                  e.target.value
-                                )
-                              }
-                            />
-                            <AntButton
-                              onClick={() =>
-                                applyTxChanges(peer.peerId, block.id, tx.id)
-                              }
-                              type="dashed"
-                              size="small"
-                            >
-                              {t("ApplyTxChanges", "Apply Changes to Tx")}
-                            </AntButton>
-                          </Space>
-                        </Card>
-                      ))}
                   </div>
                 ))}
-              </Space>
+              </div>
             </Col>
           ))}
         </Row>
+
+        {selectedBlock && selectedPeerId && (
+          <Modal
+            title={`${t('TokenBlockDetails', 'Token Block Details')} - ${t('Peer', 'Peer')} ${selectedPeerId} - ${t('Block', 'Block')} #${selectedBlock.blockNumber}`}
+            visible={isModalVisible}
+            onOk={handleModalClose}
+            onCancel={handleModalClose}
+            width={800}
+            footer={[ <AntButton key="close" onClick={handleModalClose}> {t('CloseButton', 'Close')} </AntButton> ]}
+          >
+            <BlockCard
+              blockNumber={selectedBlock.blockNumber}
+              nonce={selectedBlock.nonce}
+              data={selectedBlock.data}
+              dataType="transactions"
+              previousHash={selectedBlock.previousHash}
+              currentHash={selectedBlock.currentHash}
+              isValid={selectedBlock.isValid}
+              onNonceChange={(value) => handleNonceChange(selectedPeerId, selectedBlock.id, value)}
+              onMine={() => handleMine(selectedPeerId, selectedBlock.id)}
+              isMining={ miningStates[`${selectedPeerId}-${selectedBlock.id}`] || false }
+              isFirstBlock={selectedBlock.blockNumber === 1}
+            />
+            {/* Editable P2P Transactions Section for Modal */}
+            {Array.isArray(selectedBlock.data) && selectedBlock.data.length > 0 && (
+              <Card size="small" key={`${selectedBlock.id}-p2p-edit-modal`} style={{ marginTop: "5px", backgroundColor: "#f0f0f0" }}>
+                <Text strong>{t("EditP2PTxs", "Edit P2P Txs")}</Text>
+                {selectedBlock.data.map((tx) => (
+                  <Space direction="vertical" key={tx.id} style={{ width: "100%", marginTop: "5px", paddingTop: "5px", borderTop: "1px dashed #ccc" }}>
+                    <Input addonBefore={t("From")} value={editingTxState[tx.id]?.from ?? tx.from}
+                      onChange={(e) => handleTxInputChange(tx.id, "from", e.target.value)}
+                    />
+                    <Input addonBefore={t("To")} value={editingTxState[tx.id]?.to ?? tx.to}
+                      onChange={(e) => handleTxInputChange(tx.id, "to", e.target.value)}
+                    />
+                    <Input addonBefore={t("Value")} value={editingTxState[tx.id]?.value?.toString() ?? tx.value.toString()}
+                      onChange={(e) => handleTxInputChange(tx.id, "value", e.target.value)}
+                    />
+                    <AntButton onClick={() => applyTxChanges(selectedPeerId, selectedBlock.id, tx.id)} type="dashed" size="small">
+                      {t("ApplyTxChanges", "Apply Changes to Tx")} {tx.id.substring(0, 4)}...
+                    </AntButton>
+                  </Space>
+                ))}
+              </Card>
+            )}
+          </Modal>
+        )}
       </div>
     </>
   );

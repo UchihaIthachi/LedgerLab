@@ -66,15 +66,25 @@ const ZeroKnowledgeProofPage: NextPage = () => {
   const [selectedStateIds, setSelectedStateIds] = useState<string[]>([]);
 
   const getDisplayColor = useCallback((stateId: string, currentOffset: number, revealAll: boolean, currentSelectedIds: string[]): string => {
-    if (BASE_COLOR_INDICES.hasOwnProperty(stateId)) {
-      if (revealAll || currentSelectedIds.includes(stateId)) {
+    // Logic when "Show All Colors" is active
+    if (revealAll) {
+      if (BASE_COLOR_INDICES.hasOwnProperty(stateId)) { // Is it a participating state?
         const baseColorIndex = BASE_COLOR_INDICES[stateId];
         const permutedColorIndex = (baseColorIndex + currentOffset) % COLOR_PALETTE.length;
         return COLOR_PALETTE[permutedColorIndex];
+      } else {
+        return HIDDEN_COLOR; // Non-participating states are hidden
+      }
+    } else { // Logic when individual states are selected
+      if (BASE_COLOR_INDICES.hasOwnProperty(stateId) && currentSelectedIds.includes(stateId)) {
+        const baseColorIndex = BASE_COLOR_INDICES[stateId];
+        const permutedColorIndex = (baseColorIndex + currentOffset) % COLOR_PALETTE.length;
+        return COLOR_PALETTE[permutedColorIndex];
+      } else {
+        return HIDDEN_COLOR; // Non-participating or non-selected states are hidden
       }
     }
-    return HIDDEN_COLOR;
-  }, []);
+  }, []); // BASE_COLOR_INDICES, COLOR_PALETTE, HIDDEN_COLOR are module-level constants
 
   // Initialize/Update colors when map data or relevant state changes
   useEffect(() => {

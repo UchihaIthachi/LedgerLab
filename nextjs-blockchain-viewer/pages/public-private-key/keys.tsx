@@ -60,7 +60,7 @@ const KeysPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>{t('KeysTitle', 'Public/Private Keys')} - {t('Blockchain Demo')}</title>
+        <title>{String(t('KeysTitle', 'Public/Private Keys'))} - {String(t('Blockchain Demo'))}</title>
       </Head>
       <div>
         <Title level={2}>{t('KeysPageTitle', 'Generate Public/Private Key Pair')}</Title>
