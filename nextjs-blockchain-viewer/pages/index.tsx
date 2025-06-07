@@ -18,7 +18,7 @@ export default function Home(_props: InferGetStaticPropsType<typeof getStaticPro
   return (
     <>
       <Head>
-        <title>{t('Blockchain Demo', 'Blockchain Demo')}</title>
+        <title>{String(t('Blockchain Demo', 'Blockchain Demo'))}</title>
         <meta name="description" content={t('MetaDescription', 'Interactive Blockchain Demonstrations')} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />

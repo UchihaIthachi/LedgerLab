@@ -65,7 +65,7 @@ const BlockPage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>{t('Block', 'Block')} - {t('Blockchain Demo')}</title>
+        <title>{String(t('Block', 'Block'))} - {String(t('Blockchain Demo'))}</title>
       </Head>
       <div>
         <h1>{t('BlockViewTitle', 'Blockchain - Single Block View')}</h1>
