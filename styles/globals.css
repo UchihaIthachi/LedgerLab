@@ -105,3 +105,17 @@ a {
     color-scheme: dark;
   }
 }
+
+/* In styles/globals.css */
+@keyframes pulse {
+  0% {
+    stroke-opacity: 1;
+    /* For rope-like, maybe scale strokeWidth slightly or change color intensity */
+  }
+  50% {
+    stroke-opacity: 0.6;
+  }
+  100% {
+    stroke-opacity: 1;
+  }
+}

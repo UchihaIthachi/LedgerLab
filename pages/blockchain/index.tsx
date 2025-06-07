@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Added useMemo
 import { NextPage } from 'next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
 import { Modal, Button } from 'antd';
 import BlockCard from '@/components/Blockchain/BlockCard';
-import CompactBlockCard from '@/components/Blockchain/CompactBlockCard';
-import { ArcherContainer, ArcherElement } from 'react-archer'; // Added react-archer imports
+// import CompactBlockCard from '@/components/Blockchain/CompactBlockCard'; // Comment out CompactBlockCard
+// import { ArcherContainer, ArcherElement } from 'react-archer'; // Added react-archer imports
+import WhiteboardWrapper from '@/components/Blockchain/WhiteboardCanvas'; // Add this
 import {
   BlockType,
   calculateHash,
@@ -33,14 +34,18 @@ const BlockchainIndexPage: NextPage = () => {
     for (let i = 0; i < initialChainLength; i++) {
       const blockNumber = i + 1;
       const data = `Block ${blockNumber} Data`;
+      let currentPreviousHash = previousHash;
+      if (i === 1) { // For the second block, make its previousHash invalid
+        currentPreviousHash = "invalidhash1234567890abcdefinvalidhash1234567890abcdef";
+      }
       const block = createInitialBlock(
         blockNumber,
         data,
-        previousHash,
+        currentPreviousHash, // Use potentially modified previousHash
         data === `Block ${blockNumber} Data` ? precalculatedNonces[i] : undefined
       );
       newChain.push(block);
-      previousHash = block.currentHash;
+      previousHash = block.currentHash; // Correctly set for the *next* block's previousHash
     }
     setChain(newChain);
   }, []);
@@ -136,6 +141,11 @@ const BlockchainIndexPage: NextPage = () => {
     setSelectedBlock(null);
   };
 
+  // Find the currently mining block's ID (simplified)
+  const currentMiningBlockId = useMemo(() => {
+    return Object.entries(miningStates).find(([_id, isMining]) => isMining)?.[0] || null;
+  }, [miningStates]);
+
   return (
     <>
       <Head>
@@ -143,33 +153,27 @@ const BlockchainIndexPage: NextPage = () => {
       </Head>
       <div>
         <h1>{t('BlockchainViewTitle', 'Blockchain - Chain View')}</h1>
-        <ArcherContainer strokeColor="grey" endMarker={false}> {/* strokeWidth default is 2, removed lineStyle */}
-          <div style={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', padding: '20px 5px', WebkitOverflowScrolling: 'touch' }}>
-            {chain.map((block, index) => (
-              <ArcherElement
-                key={block.id}
-                id={`block-${block.id}`}
-                relations={index < chain.length - 1 ? [{
-                  targetId: `block-${chain[index + 1].id}`,
-                  targetAnchor: 'left',
-                  sourceAnchor: 'right',
-                  style: { strokeWidth: 3 }, // Solid, thicker line
-                }] : undefined}
-              >
-                <div style={{ marginRight: '30px', marginLeft: '10px', flexShrink: 0 }}> {/* Added marginLeft and increased marginRight for spacing */}
-                  <CompactBlockCard
-                    blockNumber={block.blockNumber}
-                    currentHash={block.currentHash}
-                    previousHash={block.previousHash}
-                    isValid={block.isValid}
-                    onClick={() => showModal(block)}
-                  />
-                </div>
-              </ArcherElement>
-            ))}
-          </div>
-        </ArcherContainer>
+        <WhiteboardWrapper chain={chain} onNodeClick={showModal} miningBlockId={currentMiningBlockId} /> {/* Pass chain, click handler and miningBlockId */}
 
+        {/* Remove or comment out the old ArcherElement mapping:
+        {chain.map((block, index) => (
+          <ArcherElement
+            key={block.id}
+            id={`block-${block.id}`}
+            relations={index < chain.length - 1 ? [{ ... }] : undefined}
+          >
+            <div style={{ marginRight: '30px', marginLeft: '10px', flexShrink: 0 }}>
+              <CompactBlockCard
+                blockNumber={block.blockNumber}
+                currentHash={block.currentHash}
+                previousHash={block.previousHash}
+                isValid={block.isValid}
+                onClick={() => showModal(block)}
+              />
+            </div>
+          </ArcherElement>
+        ))}
+        */}
         {selectedBlock && (
           <Modal
             title={`${t('BlockDetailsTitle', 'Block Details')} - ${t('Block', 'Block')} #${selectedBlock.blockNumber}`}
