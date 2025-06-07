@@ -1,53 +1,37 @@
 {
-  "name": "blockchain-demo",
-  "description": "A web-based demonstration of blockchain concepts.",
-  "author": {
-    "name": "Anders Brownworth"
-  },
-  "version": "0.0.1",
-  "keywords": [
-    "blockchain",
-    "demo",
-    "bitcoin"
-  ],
+  "name": "nextjs-blockchain-viewer",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/anders94/blockchain-demo.git"
-  },
-  "bugs": {
-    "url": "https://github.com/anders94/blockchain-demo/issues"
-  },
-  "license": "MIT",
   "dependencies": {
-    "@types/crypto-js": "^4.2.2",
-    "@types/elliptic": "^6.4.18",
-    "@types/react-simple-maps": "^3.0.6",
-    "@types/topojson-client": "^3.1.5",
-    "async": "^3.2.3",
-    "body-parser": "^1.19.0",
-    "buffer": "^6.0.3",
-    "cookie-parser": "^1.4.4",
+    "@ant-design/icons": "^6.0.0",
+    "antd": "^5.25.4",
     "crypto-js": "^4.2.0",
     "elliptic": "^6.6.1",
-    "express": "^4.17.1",
     "framer-motion": "^12.16.0",
-    "i18n": "^0.14.2",
-    "morgan": "^1.10.0",
-    "next-pwa": "^5.6.0",
-    "pug": "^3.0.1",
-    "react-archer": "^4.4.0",
-    "react-simple-maps": "^3.0.0",
-    "serve-favicon": "^2.5.0",
-    "topojson-client": "^3.1.0"
+    "i18next": "^25.2.1",
+    "next": "13.5.6",
+    "next-i18next": "^15.4.2",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-i18next": "^15.5.2"
   },
-  "homepage": "https://github.com/anders94/blockchain-demo#readme",
-  "maintainers": [
-    {
-      "name": "anders",
-      "email": "anders-git@evantide.com"
-    }
-  ]
+  "devDependencies": {
+    "@types/antd": "^1.0.4",
+    "@types/crypto-js": "^4.2.2",
+    "@types/elliptic": "^6.4.18",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "13.5.6",
+    "eslint-config-prettier": "^10.1.5",
+    "prettier": "^3.5.3",
+    "typescript": "^5"
+  }
 }
