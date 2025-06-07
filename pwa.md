@@ -58,6 +58,29 @@ The `next-pwa` plugin automatically generates a service worker file (`sw.js`) ba
 
 The default caching strategies provided by `next-pwa` are generally robust for many applications, prioritizing a cache-first approach for assets and a network-first (or stale-while-revalidate) approach for pages.
 
+In addition to these default strategies, a custom runtime caching rule has been configured in `next.config.js` to specifically handle tutorial data files. This rule targets JSON files located under `/data/tutorials/` (e.g., `/data/tutorials/understanding_blocks.json`). It employs a 'StaleWhileRevalidate' strategy, which means the application will first try to serve the tutorial data from the cache for a fast response. Simultaneously, it will check the network for an updated version of the file. If a newer version is found, it will be cached for future use. This approach ensures that users have access to tutorial data even when offline or on slow networks, while also ensuring the data is kept reasonably up-to-date without blocking the initial content rendering.
+
+The configuration for this rule within `next.config.js` looks like this:
+```javascript
+// ... other next-pwa configurations
+runtimeCaching: [
+  {
+    urlPattern: /\/data\/tutorials\/.*\.json$/,
+    handler: 'StaleWhileRevalidate',
+    options: {
+      cacheName: 'tutorial-data',
+      expiration: {
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      },
+      cacheableResponse: {
+        statuses: [0, 200], // Cache successful responses and opaque responses (for cross-origin requests)
+      },
+    },
+  },
+],
+// ...
+```
+
 ## Testing PWA Features
 
 To test PWA features:
