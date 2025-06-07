@@ -9,7 +9,10 @@ import ReactFlow, {
   Node, // Keep Node for type definition
   useNodesState,
   useEdgesState,
+  useReactFlow, // Import useReactFlow
 } from 'reactflow';
+import { Button } from 'antd'; // Import Button
+import { ExpandAltOutlined } from '@ant-design/icons'; // Import an icon
 import 'reactflow/dist/style.css';
 import FlowNodeBlock, { FlowNodeBlockData } from './FlowNodeBlock'; // Adjust path as needed
 import CustomEdge, { CustomEdgeData } from './CustomEdge'; // Adjust path
@@ -29,11 +32,13 @@ interface WhiteboardCanvasProps {
   chain: BlockType[];
   onNodeClick: (block: BlockType) => void;
   miningBlockId?: string | null; // ID of the block currently being mined
+  onNodeRemove: (id: string) => void; // Added onNodeRemove
 }
 
-const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ chain, onNodeClick, miningBlockId }) => {
+const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ chain, onNodeClick, miningBlockId, onNodeRemove }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeBlockData>([]); // Specify NodeData type
   const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdgeData>([]); // Specify EdgeData type for useEdgesState
+  const { fitView } = useReactFlow(); // Get fitView function
 
   useEffect(() => {
     const newNodes: Node<FlowNodeBlockData>[] = chain.map((block, index) => ({
@@ -47,6 +52,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ chain, onNodeClick,
         previousHash: block.previousHash,
         isValid: block.isValid,
         onClick: () => onNodeClick(block),
+        onRemove: onNodeRemove, // Pass onNodeRemove
+        isGenesis: index === 0, // Determine if it's the genesis block
       },
     }));
 
@@ -74,15 +81,19 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ chain, onNodeClick,
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [chain, onNodeClick, setNodes, setEdges, miningBlockId]); // Added miningBlockId to dependencies
+  }, [chain, onNodeClick, setNodes, setEdges, miningBlockId, onNodeRemove]); // Added onNodeRemove to dependencies
 
   const onConnect = useCallback(
     (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
 
+  const handleFitView = () => {
+    fitView({ padding: 0.1, duration: 300 }); // Use padding and optional animation duration
+  };
+
   return (
-    <div style={{ width: '100%', height: '70vh' }}> {/* Adjust height as needed */}
+    <div style={{ width: '100%', height: '70vh', position: 'relative' }}> {/* Added position: relative for positioning button */}
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -95,6 +106,59 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({ chain, onNodeClick,
       >
         <Controls />
         <Background />
+        {/* SVG Definitions for Arrowhead Markers */}
+        <svg>
+          <defs>
+            <marker
+              id="arrowhead-valid"
+              viewBox="-0 -5 10 10"
+              refX="10" // Adjust refX so the arrow tip is at the end of the line
+              refY="0"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#52c41a" /> {/* z to close path */}
+            </marker>
+            <marker
+              id="arrowhead-invalid"
+              viewBox="-0 -5 10 10"
+              refX="10" // Adjust refX
+              refY="0"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#ff4d4f" /> {/* z to close path */}
+            </marker>
+             <marker
+              id="arrowhead-default" // Fallback or for other types of edges if needed
+              viewBox="-0 -5 10 10"
+              refX="10"
+              refY="0"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#aaa" /> {/* Default color */}
+            </marker>
+          </defs>
+        </svg>
+        {/* Add Fit View Button */}
+        <div style={{
+          position: 'absolute',
+          top: '10px', // Adjust as needed
+          right: '10px', // Adjust to place near controls, or use Ant Design FloatButton for more flexibility
+          zIndex: 10 // Ensure it's above the canvas elements but potentially below modal
+        }}>
+          <Button
+            icon={<ExpandAltOutlined />}
+            onClick={handleFitView}
+            title="Fit View" // Tooltip for the button
+          >
+            {/* Fit View */} {/* Optional text next to icon */}
+          </Button>
+        </div>
       </ReactFlow>
     </div>
   );

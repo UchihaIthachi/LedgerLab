@@ -1,6 +1,7 @@
 import React from 'react';
 import { getBezierPath, EdgeProps, EdgeLabelRenderer } from 'reactflow';
 import { useTranslation } from 'next-i18next';
+import { Tooltip } from 'antd'; // Add Tooltip import
 
 export interface CustomEdgeData {
   isValid?: boolean; // To control styling based on chain validity
@@ -17,7 +18,7 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
   targetPosition,
   style = {},
   data,
-  markerEnd,
+  // markerEnd, // We'll set this dynamically on the path itself
 }) => {
   const { t } = useTranslation('common');
   const [edgePath, labelX, labelY] = getBezierPath({
@@ -40,6 +41,8 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
     ...style, // Allow overriding with other styles
   };
 
+  const determinedMarkerEnd = isValid ? 'url(#arrowhead-valid)' : 'url(#arrowhead-invalid)';
+
   // Basic CSS for pulsing animation (can be added to a global CSS file or a style tag)
   // @keyframes pulse {
   //   0% { opacity: 1; }
@@ -47,15 +50,27 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
   //   100% { opacity: 1; }
   // }
 
-  return (
-    <>
-      <path
-        id={id}
-        style={edgeStyle}
-        className="react-flow__edge-path"
-        d={edgePath}
-        markerEnd={markerEnd}
-      />
+  const edgePathComponent = (
+    <path
+      id={id}
+      style={edgeStyle}
+      className="react-flow__edge-path"
+      d={edgePath}
+      markerEnd={determinedMarkerEnd} // Dynamically set marker
+    />
+  );
+
+  if (!isValid) {
+    return (
+      <Tooltip title={t('InvalidLinkTooltip', 'Link broken: Previous hash mismatch. Try re-mining the preceding block or check data integrity.')}>
+        <g> {/* Grouping element for tooltip events */}
+          {edgePathComponent}
+        </g>
+      </Tooltip>
+    );
+  }
+
+  return <>{edgePathComponent}</>; // Render path directly if valid
       {/* Optional: Add a label to the edge, e.g., to indicate status */}
       {/* {!isValid && (
         <EdgeLabelRenderer>
