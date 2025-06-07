@@ -116,7 +116,7 @@ const BlockCard: React.FC<BlockCardProps> = ({
   };
 
   return (
-    <Card title={`${t('Block')} #${blockNumber}`} style={cardStyle} bodyStyle={cardBodyStyle}>
+    <Card title={`${t('Block')} #${blockNumber}`} style={cardStyle} styles={{ body: cardBodyStyle }}>
       <Form form={form} layout="vertical">
         <Form.Item label={t('BlockNumberLabel', 'Block #')} name="blockNumber">
           <InputNumber readOnly style={{ width: '100%' }} />

@@ -43,7 +43,6 @@ export default function Home(_props: InferGetStaticPropsType<typeof getStaticPro
                 className={styles.vercelLogo}
                 width={100}
                 height={24}
-                priority
               />
             </a>
           </div>

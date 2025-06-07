@@ -57,7 +57,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       getItem(t('Tokens', 'Tokens'), '/blockchain/tokens', <DollarCircleOutlined />),
       getItem(t('Coinbase', 'Coinbase'), '/blockchain/coinbase', <GiftOutlined />),
     ]),
-    getItem(t('PPKSectionTitle', 'Public/Private Key'), '/public-private-key', <KeyOutlined />, [
+    getItem(t('PPKSectionTitle', 'Public/Private Key Cryptography'), '/public-private-key', <KeyOutlined />, [
       getItem(t('KeysFeatureName', 'Key Pair Generation'), '/public-private-key/keys', <KeyOutlined />),
       getItem(t('SignaturesFeatureName', 'Digital Signatures'), '/public-private-key/signatures', <SignatureOutlined />),
       getItem(t('TransactionSigningTitle', 'Transaction Signing'), '/public-private-key/transaction', <TransactionOutlined />),
@@ -69,13 +69,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     router.push(e.key);
   };
 
-  const languageMenu = (
-    <Menu onClick={({ key }) => router.push({ pathname, query }, asPath, { locale: key })}>
-      {locales?.map((l) => (
-        <Menu.Item key={l}>{l.toUpperCase()}</Menu.Item>
-      ))}
-    </Menu>
-  );
+  const handleLanguageMenuClick = ({ key }: { key: string }) => {
+    router.push({ pathname, query }, asPath, { locale: key });
+  };
+
+  const languageMenuItems = locales?.map((l) => ({
+    key: l,
+    label: l.toUpperCase(),
+  }));
 
   const openSubMenuKeys = menuItems
     .filter(item => item && item.children && item.children.some(child => child && pathname.startsWith(child.key as string)))
@@ -109,7 +110,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       </Sider>
       <AntLayout className="site-layout">
         <Header style={{ padding: '0 16px', background: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }} >
-          <Dropdown overlay={languageMenu} placement="bottomRight">
+          <Dropdown menu={{ items: languageMenuItems, onClick: handleLanguageMenuClick }} placement="bottomRight">
             <Button icon={<GlobalOutlined />}>
               {currentLocale?.toUpperCase()}
             </Button>
