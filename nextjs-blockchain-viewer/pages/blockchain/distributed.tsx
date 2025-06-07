@@ -158,7 +158,7 @@ const DistributedPage: NextPage = () => {
         <h1>{t('DistributedViewTitle', 'Blockchain - Distributed View')}</h1>
         <Row gutter={[16, 16]}>
           {peers.map(peer => (
-            <Col key={peer.peerId} xs={24} md={12} lg={8}>
+            <Col key={peer.peerId} span={24}>
               <Title level={3} style={{ textAlign: 'center' }}>{t(peer.peerId, peer.peerId)}</Title>
               <div style={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', padding: '10px 0', WebkitOverflowScrolling: 'touch' }}>
                 {peer.chain.map((block) => (

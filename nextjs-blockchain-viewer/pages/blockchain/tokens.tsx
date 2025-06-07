@@ -216,7 +216,7 @@ const TokensPage: NextPage = () => {
         <h1>{t("TokensViewTitle", "Blockchain - Tokens View")}</h1>
         <Row gutter={[16, 16]}>
           {peers.map((peer) => (
-            <Col key={peer.peerId} xs={24} md={12} lg={8}>
+            <Col key={peer.peerId} span={24}>
               <Title level={4} style={{ textAlign: "center" }}>
                 {t(peer.peerId, peer.peerId)}
               </Title>
