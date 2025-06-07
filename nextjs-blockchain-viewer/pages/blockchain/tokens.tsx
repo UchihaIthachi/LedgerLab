@@ -23,6 +23,7 @@ import {
 } from "@/lib/blockchainUtils";
 
 const { Title, Text } = Typography;
+const { Title, Text } = Typography;
 
 const initialChainLength = 3; // Keep it shorter for this view
 const peerIds = ["Peer A", "Peer B", "Peer C"];
