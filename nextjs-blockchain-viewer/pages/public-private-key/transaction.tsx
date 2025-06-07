@@ -121,7 +121,7 @@ const PKTransactionPage: NextPage = () => {
     formSign.setFieldsValue({ from_public_key_sign: pubKeyHex, private_key_sign: privKeyHex });
     formVerify.setFieldsValue({ from_public_key_verify: pubKeyHex });
 
-    setMessageSignature(''); // Clear any old signature
+    setSignSignature(''); // Clear any old signature
     setShowAlert(false);
     setAlertMessage(t('KeyPairGenerated', 'New key pair generated and public key fields updated.'));
     setAlertType('success');
