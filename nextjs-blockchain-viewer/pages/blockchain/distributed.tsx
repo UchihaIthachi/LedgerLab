@@ -3,9 +3,10 @@ import { NextPage } from 'next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
-import { Row, Col, Typography, Space, Modal, Button as AntButton } from 'antd'; // Added Modal, AntButton
+import { Row, Col, Typography, Space, Modal, Button as AntButton } from 'antd';
 import BlockCard from '@/components/Blockchain/BlockCard';
-import CompactBlockCard from '@/components/Blockchain/CompactBlockCard'; // Added CompactBlockCard
+import CompactBlockCard from '@/components/Blockchain/CompactBlockCard';
+import { ArcherContainer, ArcherElement } from 'react-archer'; // Added react-archer
 import {
   BlockType,
   calculateHash,
@@ -29,7 +30,6 @@ const DistributedPage: NextPage = () => {
   const [peers, setPeers] = useState<Peer[]>([]);
   const [miningStates, setMiningStates] = useState<{[key: string]: boolean}>({});
 
-  // Modal State
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedBlock, setSelectedBlock] = useState<BlockType | null>(null);
   const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
@@ -85,9 +85,7 @@ const DistributedPage: NextPage = () => {
         if (peer.peerId === peerId) {
           const blockIndex = peer.chain.findIndex(b => b.id === blockId);
           if (blockIndex === -1) return peer;
-
           const updatedPeerChain = chainUpdateLogic([...peer.chain]);
-
           if (selectedBlock && selectedBlock.id === blockId && selectedPeerId === peerId) {
             setSelectedBlock(updatedPeerChain.find(b => b.id === blockId) || null);
           }
@@ -119,7 +117,6 @@ const DistributedPage: NextPage = () => {
     const miningKey = `${peerId}-${blockId}`;
     setMiningStates(prev => ({ ...prev, [miningKey]: true }));
     await new Promise(resolve => setTimeout(resolve, 0));
-
     updatePeerChainAndSelectedBlock(peerId, blockId, (currentChain) => {
       const blockIndex = currentChain.findIndex(b => b.id === blockId);
       const blockToMine = currentChain[blockIndex];
@@ -135,7 +132,7 @@ const DistributedPage: NextPage = () => {
       setMiningStates(prev => ({ ...prev, [miningKey]: false }));
       return getUpdatedChain(currentChain, blockIndex);
     });
-  }, [selectedPeerId, selectedBlock]); // Dependencies for useCallback
+  }, [selectedPeerId, selectedBlock]);
 
   const showBlockModal = (peer: Peer, block: BlockType) => {
     setSelectedPeerId(peer.peerId);
@@ -160,19 +157,32 @@ const DistributedPage: NextPage = () => {
           {peers.map(peer => (
             <Col key={peer.peerId} span={24}>
               <Title level={3} style={{ textAlign: 'center' }}>{t(peer.peerId, peer.peerId)}</Title>
-              <div style={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', padding: '10px 0', WebkitOverflowScrolling: 'touch' }}>
-                {peer.chain.map((block) => (
-                  <div key={`${peer.peerId}-${block.id}`} style={{ marginRight: '10px', flexShrink: 0 }}>
-                    <CompactBlockCard
-                      blockNumber={block.blockNumber}
-                      currentHash={block.currentHash}
-                      previousHash={block.previousHash}
-                      isValid={block.isValid}
-                      onClick={() => showBlockModal(peer, block)}
-                    />
-                  </div>
-                ))}
-              </div>
+              <ArcherContainer strokeColor="grey" endMarker={false}>
+                <div style={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', padding: '10px 0', WebkitOverflowScrolling: 'touch' }}>
+                  {peer.chain.map((block, index) => (
+                    <ArcherElement
+                      key={block.id} // Key on ArcherElement
+                      id={`peer-${peer.peerId}-block-${block.id}`}
+                      relations={index < peer.chain.length - 1 ? [{
+                        targetId: `peer-${peer.peerId}-block-${peer.chain[index + 1].id}`,
+                        targetAnchor: 'left',
+                        sourceAnchor: 'right',
+                        style: { strokeWidth: 3 },
+                      }] : undefined}
+                    >
+                      <div style={{ marginRight: '30px', marginLeft: '10px', flexShrink: 0 }}>
+                        <CompactBlockCard
+                          blockNumber={block.blockNumber}
+                          currentHash={block.currentHash}
+                          previousHash={block.previousHash}
+                          isValid={block.isValid}
+                          onClick={() => showBlockModal(peer, block)}
+                        />
+                      </div>
+                    </ArcherElement>
+                  ))}
+                </div>
+              </ArcherContainer>
             </Col>
           ))}
         </Row>
@@ -190,7 +200,6 @@ const DistributedPage: NextPage = () => {
               blockNumber={selectedBlock.blockNumber}
               nonce={selectedBlock.nonce}
               data={selectedBlock.data}
-              // No specific dataType like 'transactions' or 'coinbase' here, defaults to string or generic data
               previousHash={selectedBlock.previousHash}
               currentHash={selectedBlock.currentHash}
               isValid={selectedBlock.isValid}

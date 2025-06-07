@@ -12,10 +12,11 @@ import {
   Button as AntButton,
   InputNumber,
   Card,
-  Modal, // Added Modal
+  Modal,
 } from "antd";
 import BlockCard from "@/components/Blockchain/BlockCard";
-import CompactBlockCard from "@/components/Blockchain/CompactBlockCard"; // Added CompactBlockCard
+import CompactBlockCard from "@/components/Blockchain/CompactBlockCard";
+import { ArcherContainer, ArcherElement } from 'react-archer'; // Added react-archer
 import {
   BlockType,
   TransactionType,
@@ -78,7 +79,6 @@ const CoinbasePage: NextPage = () => {
     [blockId: string]: Partial<CoinbaseTransactionType>;
   }>({});
 
-  // Modal State
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedBlock, setSelectedBlock] = useState<BlockType | null>(null);
   const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
@@ -130,7 +130,6 @@ const CoinbasePage: NextPage = () => {
     return updatedChain;
   };
 
-  // Generic handler to update peer's chain and selectedBlock if it's the one being edited
   const updatePeerChainAndSelectedBlock = (
     peerId: string,
     blockId: string,
@@ -141,9 +140,7 @@ const CoinbasePage: NextPage = () => {
         if (peer.peerId === peerId) {
           const blockIndex = peer.chain.findIndex((b) => b.id === blockId);
           if (blockIndex === -1) return peer;
-
           const updatedPeerChain = chainUpdateLogic([...peer.chain]);
-
           if (selectedBlock && selectedBlock.id === blockId && selectedPeerId === peerId) {
             setSelectedBlock(updatedPeerChain.find(b => b.id === blockId) || null);
           }
@@ -153,7 +150,6 @@ const CoinbasePage: NextPage = () => {
       })
     );
   };
-
 
   const handleNonceChange = (
     peerId: string,
@@ -173,10 +169,7 @@ const CoinbasePage: NextPage = () => {
     field: keyof TransactionType,
     value: string
   ) => {
-    setEditingTxState((prev) => ({
-      ...prev,
-      [txId]: { ...prev[txId], [field]: value },
-    }));
+    setEditingTxState((prev) => ({ ...prev, [txId]: { ...prev[txId], [field]: value } }));
   };
 
   const applyTxChanges = (peerId: string, blockId: string, txId: string) => {
@@ -200,14 +193,11 @@ const CoinbasePage: NextPage = () => {
   };
 
   const handleCoinbaseInputChange = (
-    blockId: string, // blockId is unique enough, peerId not strictly needed here for state key
+    blockId: string,
     field: keyof CoinbaseTransactionType,
     value: string | number
   ) => {
-    setEditingCoinbaseState((prev) => ({
-      ...prev,
-      [blockId]: { ...prev[blockId], [field]: value },
-    }));
+    setEditingCoinbaseState((prev) => ({ ...prev, [blockId]: { ...prev[blockId], [field]: value } }));
   };
 
   const applyCoinbaseChanges = (peerId: string, blockId: string) => {
@@ -228,7 +218,6 @@ const CoinbasePage: NextPage = () => {
     const miningKey = `${peerId}-${blockId}`;
     setMiningStates((prev) => ({ ...prev, [miningKey]: true }));
     await new Promise((resolve) => setTimeout(resolve, 0));
-
     updatePeerChainAndSelectedBlock(peerId, blockId, (currentChain) => {
         const blockIndex = currentChain.findIndex((b) => b.id === blockId);
         const blockToMine = currentChain[blockIndex];
@@ -243,7 +232,7 @@ const CoinbasePage: NextPage = () => {
         setMiningStates((prev) => ({ ...prev, [miningKey]: false }));
         return getUpdatedChain(currentChain, blockIndex);
     });
-  }, [selectedPeerId, selectedBlock]); // Ensure re-memoization if context for mining changes, though direct args are sufficient
+  }, [selectedPeerId, selectedBlock]);
 
   const showBlockModal = (peer: Peer, block: BlockType) => {
     setSelectedPeerId(peer.peerId);
@@ -272,19 +261,32 @@ const CoinbasePage: NextPage = () => {
               <Title level={4} style={{ textAlign: "center" }}>
                 {t(peer.peerId, peer.peerId)}
               </Title>
-              <div style={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', padding: '10px 0', WebkitOverflowScrolling: 'touch' }}>
-                {peer.chain.map((block) => (
-                  <div key={`${peer.peerId}-${block.id}`} style={{ marginRight: '10px', flexShrink: 0 }}>
-                    <CompactBlockCard
-                      blockNumber={block.blockNumber}
-                      currentHash={block.currentHash}
-                      previousHash={block.previousHash}
-                      isValid={block.isValid}
-                      onClick={() => showBlockModal(peer, block)}
-                    />
-                  </div>
-                ))}
-              </div>
+              <ArcherContainer strokeColor="grey" endMarker={false}>
+                <div style={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', padding: '10px 0', WebkitOverflowScrolling: 'touch' }}>
+                  {peer.chain.map((block, index) => (
+                    <ArcherElement
+                      key={block.id} // Keep key on ArcherElement if it's the direct child of map
+                      id={`peer-${peer.peerId}-block-${block.id}`}
+                      relations={index < peer.chain.length - 1 ? [{
+                        targetId: `peer-${peer.peerId}-block-${peer.chain[index + 1].id}`,
+                        targetAnchor: 'left',
+                        sourceAnchor: 'right',
+                        style: { strokeWidth: 3 },
+                      }] : undefined}
+                    >
+                      <div style={{ marginRight: '30px', marginLeft: '10px', flexShrink: 0 }}>
+                        <CompactBlockCard
+                          blockNumber={block.blockNumber}
+                          currentHash={block.currentHash}
+                          previousHash={block.previousHash}
+                          isValid={block.isValid}
+                          onClick={() => showBlockModal(peer, block)}
+                        />
+                      </div>
+                    </ArcherElement>
+                  ))}
+                </div>
+              </ArcherContainer>
             </Col>
           ))}
         </Row>
@@ -312,7 +314,6 @@ const CoinbasePage: NextPage = () => {
               isMining={ miningStates[`${selectedPeerId}-${selectedBlock.id}`] || false }
               isFirstBlock={selectedBlock.blockNumber === 1}
             />
-            {/* Editable Coinbase Section for Modal */}
             {selectedBlock.coinbase && (
               <Card size="small" key={`${selectedBlock.id}-cb-edit-modal`} style={{ marginTop: "5px", backgroundColor: "#fafafa" }}>
                 <Space direction="vertical" style={{ width: "100%" }}>
@@ -329,7 +330,6 @@ const CoinbasePage: NextPage = () => {
                 </Space>
               </Card>
             )}
-            {/* Editable P2P Transactions Section for Modal */}
             {Array.isArray(selectedBlock.data) && selectedBlock.data.length > 0 && (
               <Card size="small" key={`${selectedBlock.id}-p2p-edit-modal`} style={{ marginTop: "5px", backgroundColor: "#f0f0f0" }}>
                 <Text strong>{t("EditP2PTxs", "Edit P2P Txs")}</Text>
