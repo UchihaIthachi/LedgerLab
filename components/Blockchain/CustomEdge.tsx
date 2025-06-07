@@ -21,7 +21,8 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
   // markerEnd, // We'll set this dynamically on the path itself
 }) => {
   const { t } = useTranslation('common');
-  const [edgePath, labelX, labelY] = getBezierPath({
+  // labelX and labelY are unused after removing EdgeLabelRenderer, so remove them from destructuring
+  const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -71,27 +72,7 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
   }
 
   return <>{edgePathComponent}</>; // Render path directly if valid
-      {/* Optional: Add a label to the edge, e.g., to indicate status */}
-      {/* {!isValid && (
-        <EdgeLabelRenderer>
-          <div
-            style={{
-              position: 'absolute',
-              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-              fontSize: 10,
-              background: '#ff4d4f',
-              color: 'white',
-              padding: '2px 4px',
-              borderRadius: '3px',
-            }}
-            className="nodrag nopan"
-          >
-            {t('InvalidLink', 'Broken Link')}
-          </div>
-        </EdgeLabelRenderer>
-      )} */}
-    </>
-  );
+  // Removed the extraneous </> and the commented out EdgeLabelRenderer block that was causing the syntax error
 };
 
 export default CustomEdge;
