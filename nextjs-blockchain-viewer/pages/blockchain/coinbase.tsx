@@ -3,7 +3,7 @@ import { NextPage } from 'next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
-import { Row, Col, Typography, Space, Input, Button as AntButton, InputNumber } from 'antd';
+import { Row, Col, Typography, Space, Input, Button as AntButton, InputNumber, Card } from 'antd';
 import BlockCard from '@/components/Blockchain/BlockCard';
 import {
   BlockType,

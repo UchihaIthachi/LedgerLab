@@ -3,7 +3,7 @@ import { NextPage } from 'next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
-import { Row, Col, Typography, Space, Input, Button as AntButton } from 'antd'; // Added Input, AntButton for tx editing
+import { Row, Col, Typography, Space, Input, Button as AntButton, Card } from 'antd'; // Added Input, AntButton for tx editing
 import BlockCard from '@/components/Blockchain/BlockCard';
 import {
   BlockType,
@@ -14,7 +14,7 @@ import {
   MAX_NONCE,
 } from '@/lib/blockchainUtils';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const initialChainLength = 3; // Keep it shorter for this view
 const peerIds = ['Peer A', 'Peer B', 'Peer C'];
