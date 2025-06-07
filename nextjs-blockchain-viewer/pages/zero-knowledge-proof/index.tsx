@@ -4,7 +4,8 @@ import Head from 'next/head';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import { Button, Row, Col, Space, Spin, Alert, Typography } from 'antd';
-import { ComposableMap, Geographies, Geography, GeographiesType } from 'react-simple-maps';
+import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+import { feature } from 'topojson-client';
 
 const { Text } = Typography;
 
@@ -54,7 +55,7 @@ const PARTICIPATING_STATE_IDS = Object.keys(BASE_COLOR_INDICES);
 
 const ZeroKnowledgeProofPage: NextPage = () => {
   const { t } = useTranslation('common');
-  const [mapData, setMapData] = useState<GeographiesType[] | null>(null);
+  const [mapData, setMapData] = useState<any | null>(null); // Store raw TopoJSON object
   const [loadingMap, setLoadingMap] = useState(true);
   const [mapError, setMapError] = useState<string | null>(null);
 
@@ -77,13 +78,27 @@ const ZeroKnowledgeProofPage: NextPage = () => {
 
   // Initialize/Update colors when map data or relevant state changes
   useEffect(() => {
-    if (!mapData) return;
+    if (!mapData || !mapData.objects || !mapData.objects.states) {
+        // mapData not yet loaded or doesn't have the expected structure
+        // Initialize with empty or default colors if needed, or wait for mapData
+        const emptyColors: Record<string, string> = {};
+        // Optionally, pre-fill with HIDDEN_COLOR for all known participating states if mapData is not ready
+        PARTICIPATING_STATE_IDS.forEach(id => emptyColors[id] = HIDDEN_COLOR);
+        setStateColors(emptyColors);
+        return;
+    }
 
+    // Ensure mapData.objects.states exists before trying to use it with feature()
+    const statesObject = mapData.objects.states || mapData.objects[Object.keys(mapData.objects)[0]];
+    if (!statesObject) {
+        console.error("Could not find states object in TopoJSON data", mapData.objects);
+        return;
+    }
+
+    const features = feature(mapData, statesObject).features;
     const initialColors: Record<string, string> = {};
-    mapData.forEach((geoFeature: any) => { // Changed from GeographiesType to any to access geo.id
-        geoFeature.geographies.forEach((geo: any) => {
-            initialColors[geo.id] = getDisplayColor(geo.id, colorOffset, showAllMapColors, selectedStateIds);
-        });
+    features.forEach((geo: any) => {
+        initialColors[geo.id] = getDisplayColor(geo.id, colorOffset, showAllMapColors, selectedStateIds);
     });
     setStateColors(initialColors);
   }, [mapData, colorOffset, showAllMapColors, selectedStateIds, getDisplayColor]);
@@ -96,11 +111,7 @@ const ZeroKnowledgeProofPage: NextPage = () => {
         return res.json();
       })
       .then((data) => {
-        // Store the raw geographies array from the TopoJSON features
-        // Assuming data is TopoJSON, and we need to extract features.
-        // react-simple-maps Geographies component handles TopoJSON path conversion.
-        // We just need the raw data for iterating and getting IDs.
-        setMapData([data]); // Wrap in array if Geographies expects an array of features
+        setMapData(data); // Store the raw TopoJSON object directly
         setLoadingMap(false);
       })
       .catch((error) => {
@@ -111,12 +122,21 @@ const ZeroKnowledgeProofPage: NextPage = () => {
   }, [t]);
 
   const updateStateColors = useCallback((newOffset: number, revealAll: boolean, currentSelectedIds: string[]) => {
-    if (!mapData) return;
+    if (!mapData || !mapData.objects || !mapData.objects.states) {
+        // mapData not yet loaded or doesn't have the expected structure
+        return;
+    }
+
+    const statesObject = mapData.objects.states || mapData.objects[Object.keys(mapData.objects)[0]];
+    if (!statesObject) {
+        console.error("Could not find states object in TopoJSON data for updateStateColors", mapData.objects);
+        return;
+    }
+
+    const features = feature(mapData, statesObject).features;
     const newColors: Record<string, string> = {};
-    mapData.forEach((geoFeature: any) => {
-        geoFeature.geographies.forEach((geo: any) => { // geo.id should be the state FIPS code
-            newColors[geo.id] = getDisplayColor(geo.id, newOffset, revealAll, currentSelectedIds);
-        });
+    features.forEach((geo: any) => { // geo.id should be the state FIPS code
+        newColors[geo.id] = getDisplayColor(geo.id, newOffset, revealAll, currentSelectedIds);
     });
     setStateColors(newColors);
   }, [mapData, getDisplayColor]);
@@ -187,7 +207,7 @@ const ZeroKnowledgeProofPage: NextPage = () => {
                   style={{ width: '100%', height: 'auto', maxHeight: '500px' }}
                   projectionConfig={{ scale: 1000 }}
                 >
-                  <Geographies geography={mapData} /* Pass the array of features here */ >
+                  <Geographies geography={mapData} >
                     {({ geographies }) =>
                       geographies.map((geo) => {
                         const stateId = geo.id; // FIPS code

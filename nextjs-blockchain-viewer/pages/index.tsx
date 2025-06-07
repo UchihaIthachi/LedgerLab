@@ -1,103 +1,94 @@
-import Head from 'next/head'
-import Image from 'next/image'
-// import { Inter } from 'next/font/google' // Removing font for simplicity for now
-import styles from '@/styles/Home.module.css'
+import Head from 'next/head';
+import Link from 'next/link';
+import styles from '@/styles/Home.module.css'; // Keep for .main and potentially .center
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
+import { Card, Row, Col, Typography } from 'antd';
+import { AppstoreOutlined, KeyOutlined, LockOutlined } from '@ant-design/icons'; // Using LockOutlined for ZKP
 
-// const inter = Inter({ subsets: ['latin'] }) // Removing font
+const { Title, Paragraph } = Typography;
 
 type Props = {
   // Add custom props here if needed
-}
+};
 
 export default function Home(_props: InferGetStaticPropsType<typeof getStaticProps>) {
   const { t } = useTranslation('common');
+
+  const demoSections = [
+    {
+      href: '/blockchain',
+      icon: <AppstoreOutlined style={{ fontSize: '24px', color: '#1890ff' }} />,
+      titleKey: 'BlockchainDemoCardTitle',
+      defaultTitle: 'Blockchain Demo',
+      textKey: 'BlockchainDemoCardText',
+      defaultText: 'Explore fundamental blockchain concepts like hashing, blocks, and chain validity through interactive examples.',
+    },
+    {
+      href: '/public-private-key',
+      icon: <KeyOutlined style={{ fontSize: '24px', color: '#52c41a' }} />,
+      titleKey: 'PublicPrivateKeyCardTitle',
+      defaultTitle: 'Public/Private Keys & Signing',
+      textKey: 'PublicPrivateKeyCardText',
+      defaultText: 'Understand digital signatures, key pair generation, and transaction signing in a simplified manner.',
+    },
+    {
+      href: '/zero-knowledge-proof',
+      icon: <LockOutlined style={{ fontSize: '24px', color: '#eb2f96' }} />,
+      titleKey: 'ZeroKnowledgeProofCardTitle',
+      defaultTitle: 'Zero Knowledge Proofs',
+      textKey: 'ZKPPageDescription', // Re-using existing translation key from ZKP page for consistency
+      defaultText: 'Learn about Zero-Knowledge Proofs using an interactive map coloring example to prove knowledge without revealing secrets.',
+    },
+  ];
 
   return (
     <>
       <Head>
         <title>{String(t('Blockchain Demo', 'Blockchain Demo'))}</title>
-        <meta name="description" content={t('MetaDescription', 'Interactive Blockchain Demonstrations')} />
+        <meta name="description" content={String(t('MetaDescription', 'Interactive Blockchain Demonstrations'))} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {/* <main className={`${styles.main} ${inter.className}`}> */}
       <main className={styles.main}>
-        <div className={styles.description}>
-          <p>
-            {t('GetStartedByEditing', 'Get started by editing')}&nbsp;
-            <code className={styles.code}>pages/index.tsx</code>
-          </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-              />
-            </a>
-          </div>
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}> {/* Replaces styles.center with inline style or a new class if preferred */}
+          <Title level={1} style={{ marginBottom: '16px' }}>
+            {t('WelcomeMessage', 'Welcome to the Blockchain Demo')}
+          </Title>
+          <Paragraph style={{ fontSize: '18px', maxWidth: '700px', margin: '0 auto' }}>
+            {t('HomePageIntro', 'Explore various blockchain concepts through our interactive demonstrations. Click on a card below to get started!')}
+          </Paragraph>
         </div>
 
-        <div className={styles.center}>
-          <h1>{t('WelcomeMessage', 'Welcome to the Blockchain Demo')}</h1>
-        </div>
-
-        <div className={styles.grid}>
-          <a
-            href="#" // Update link later
-            className={styles.card}
-          >
-            <h2>
-              {t('BlockchainDemoCardTitle', 'Blockchain Demo')} <span>-&gt;</span>
-            </h2>
-            <p>
-              {t('BlockchainDemoCardText', 'Explore fundamental blockchain concepts.')}
-            </p>
-          </a>
-
-          <a
-            href="#" // Update link later
-            className={styles.card}
-          >
-            <h2>
-              {t('PublicPrivateKeyCardTitle', 'Public/Private Keys')} <span>-&gt;</span>
-            </h2>
-            <p>
-              {t('PublicPrivateKeyCardText', 'Understand digital signatures and key pairs.')}
-            </p>
-          </a>
-
-          <a
-            href="#" // Update link later
-            className={styles.card}
-          >
-            <h2>
-              {t('ZeroKnowledgeProofCardTitle', 'Zero Knowledge Proofs')} <span>-&gt;</span>
-            </h2>
-            <p>
-              {t('ZeroKnowledgeProofCardText', 'Learn about ZKPs through an interactive example.')}
-            </p>
-          </a>
-        </div>
+        <Row gutter={[24, 24]} justify="center">
+          {demoSections.map((section) => (
+            <Col key={section.href} xs={24} sm={12} md={8} style={{ display: 'flex' }}>
+              <Link href={section.href} passHref style={{ width: '100%' }}>
+                <Card
+                  hoverable
+                  style={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%' }}
+                  bodyStyle={{ flexGrow: 1 }}
+                  title={
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {section.icon}
+                      <span style={{ marginLeft: '12px', fontSize: '1.1em' }}>{t(section.titleKey, section.defaultTitle)}</span>
+                    </div>
+                  }
+                >
+                  <Paragraph>{t(section.textKey, section.defaultText)}</Paragraph>
+                </Card>
+              </Link>
+            </Col>
+          ))}
+        </Row>
       </main>
     </>
-  )
+  );
 }
 
 export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => ({
   props: {
-    ...(await serverSideTranslations(locale ?? 'en', [
-      'common',
-    ])),
+    ...(await serverSideTranslations(locale ?? 'en', ['common'])),
   },
-})
+});
