@@ -6,8 +6,25 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { Card, Row, Col, Typography } from 'antd';
 import { AppstoreOutlined, KeyOutlined, LockOutlined } from '@ant-design/icons'; // Using LockOutlined for ZKP
+import { motion } from 'framer-motion';
 
 const { Title, Paragraph } = Typography;
+
+// Animation Variants for Framer Motion
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2, // Time delay between each child animation
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
 
 type Props = {
   // Add custom props here if needed
@@ -52,36 +69,60 @@ export default function Home(_props: InferGetStaticPropsType<typeof getStaticPro
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}> {/* Replaces styles.center with inline style or a new class if preferred */}
-          <Title level={1} style={{ marginBottom: '16px' }}>
-            {t('WelcomeMessage', 'Welcome to the Blockchain Demo')}
-          </Title>
-          <Paragraph style={{ fontSize: '18px', maxWidth: '700px', margin: '0 auto' }}>
-            {t('HomePageIntro', 'Explore various blockchain concepts through our interactive demonstrations. Click on a card below to get started!')}
-          </Paragraph>
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Title level={1} style={{ marginBottom: '16px' }}>
+              {t('WelcomeMessage', 'Welcome to the Blockchain Demo')}
+            </Title>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Paragraph style={{ fontSize: '18px', maxWidth: '700px', margin: '0 auto' }}>
+              {t('HomePageIntro', 'Explore various blockchain concepts through our interactive demonstrations. Click on a card below to get started!')}
+            </Paragraph>
+          </motion.div>
         </div>
 
-        <Row gutter={[24, 24]} justify="center">
-          {demoSections.map((section) => (
-            <Col key={section.href} xs={24} sm={12} md={8} style={{ display: 'flex' }}>
-              <Link href={section.href} passHref style={{ width: '100%' }}>
-                <Card
-                  hoverable
-                  style={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%' }}
-                  bodyStyle={{ flexGrow: 1 }}
-                  title={
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      {section.icon}
-                      <span style={{ marginLeft: '12px', fontSize: '1.1em' }}>{t(section.titleKey, section.defaultTitle)}</span>
-                    </div>
-                  }
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <Row gutter={[24, 24]} justify="center">
+            {demoSections.map((section) => (
+              <Col key={section.href} xs={24} sm={12} md={8} style={{ display: 'flex' }}>
+                <motion.div
+                  variants={itemVariants}
+                  style={{ width: '100%', cursor: 'pointer' }}
+                  whileHover={{ scale: 1.03, y: -5, transition: { duration: 0.2 } }}
                 >
-                  <Paragraph>{t(section.textKey, section.defaultText)}</Paragraph>
-                </Card>
-              </Link>
-            </Col>
-          ))}
-        </Row>
+                  <Link href={section.href} passHref style={{ width: '100%' }}>
+                    <Card
+                      hoverable
+                      style={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%' }}
+                      bodyStyle={{ flexGrow: 1 }}
+                      title={
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          {section.icon}
+                          <span style={{ marginLeft: '12px', fontSize: '1.1em' }}>{t(section.titleKey, section.defaultTitle)}</span>
+                        </div>
+                      }
+                    >
+                      <Paragraph>{t(section.textKey, section.defaultText)}</Paragraph>
+                    </Card>
+                  </Link>
+                </motion.div>
+              </Col>
+            ))}
+          </Row>
+        </motion.div>
       </main>
     </>
   );
