@@ -20,21 +20,26 @@ import MarkdownRenderer from '@/components/Common/MarkdownRenderer';
 import TutorialDisplay from '@/components/Tutorial/TutorialDisplay';
 import { TutorialStep } from '@/types/tutorial';
 import BlockCard from "@/components/Blockchain/BlockCard";
-import ReactFlow, {
-  ReactFlowProvider,
-  Controls,
-  Background,
-  Node,
-  Edge,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  Connection,
-  useReactFlow,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import FlowNodeBlock, { FlowNodeBlockData } from '@/components/Blockchain/FlowNodeBlock';
-import CustomEdge, { CustomEdgeData } from '@/components/Blockchain/CustomEdge';
+// ReactFlow specific imports might be removable
+// import ReactFlow, {
+//   ReactFlowProvider,
+//   Controls,
+//   Background,
+//   Node,
+//   Edge,
+//   useNodesState,
+//   useEdgesState,
+//   addEdge,
+//   Connection,
+//   useReactFlow,
+// } from 'reactflow';
+import 'reactflow/dist/style.css'; // Keep for global styles
+// FlowNodeBlock and CustomEdge imports might be removable
+// import FlowNodeBlock, { FlowNodeBlockData } from '@/components/Blockchain/FlowNodeBlock';
+// import CustomEdge, { CustomEdgeData } from '@/components/Blockchain/CustomEdge';
+import PeerChainVisualization from '@/components/Blockchain/PeerChainVisualization'; // Import the new component
+import BlockDetailModal from '@/components/Blockchain/BlockDetailModal'; // Import the new modal
+import BlockchainPageLayout from '@/components/Layout/BlockchainPageLayout'; // Import the layout
 import {
   BlockType,
   MAX_NONCE,
@@ -55,124 +60,8 @@ interface Peer {
   chain: BlockType[];
 }
 
-interface DistributedPeerFlowProps {
-  peer: Peer;
-  miningStates: { [key: string]: boolean };
-  onShowBlockModal: (peerId: string, block: BlockType) => void;
-  nodeTypes: any;
-  edgeTypes: any;
-  onAddBlockToThisPeer: () => void;
-  onResetThisPeerChain: () => void;
-  'data-peer-id'?: string; // For tutorial targeting
-}
-
-const InnerDistributedFlowCanvasAndControls: React.FC<DistributedPeerFlowProps> = ({
-  peer,
-  miningStates: globalMiningStates,
-  onShowBlockModal,
-  nodeTypes: passedNodeTypes,
-  edgeTypes: passedEdgeTypes,
-  onAddBlockToThisPeer,
-  onResetThisPeerChain,
-}) => {
-  const { peerId, chain: peerChain } = peer;
-  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeBlockData>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdgeData>([]);
-  const { fitView } = useReactFlow();
-  const { t } = useTranslation('common');
-
-  useEffect(() => {
-    const newNodes: Node<FlowNodeBlockData>[] = peerChain.map((block, index) => ({
-      id: `${peerId}-${block.id}`,
-      type: 'genericBlock',
-      position: { x: index * 220, y: 50 },
-      data: {
-        id: `${peerId}-${block.id}`,
-        'data-block-id': block.id,
-        blockNumber: block.blockNumber,
-        nonce: block.nonce,
-        data: typeof block.data === 'string' ? block.data : JSON.stringify(block.data),
-        previousHash: block.previousHash,
-        currentHash: block.currentHash,
-        isValid: block.isValid,
-        onClick: () => onShowBlockModal(peer.peerId, block),
-      },
-    }));
-    setNodes(newNodes);
-
-    const newEdges: Edge<CustomEdgeData>[] = [];
-    for (let i = 0; i < peerChain.length - 1; i++) {
-      const sourceBlock = peerChain[i];
-      const targetBlock = peerChain[i + 1];
-      const isLinkValid = sourceBlock.currentHash === targetBlock.previousHash;
-      const miningKeySource = `${peerId}-${sourceBlock.id}`;
-      const miningKeyTarget = `${peerId}-${targetBlock.id}`;
-      newEdges.push({
-        id: `edge-${peerId}-${sourceBlock.id}-to-${targetBlock.id}`,
-        source: `${peerId}-${sourceBlock.id}`,
-        target: `${peerId}-${targetBlock.id}`,
-        type: 'customEdge',
-        data: {
-          isValid: isLinkValid,
-          isAnimating: globalMiningStates[miningKeySource] || globalMiningStates[miningKeyTarget],
-        },
-      });
-    }
-    setEdges(newEdges);
-  }, [peerChain, peerId, onShowBlockModal, setNodes, setEdges, globalMiningStates, peer]);
-
-  const onConnectInternal = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
-  const handleFitView = useCallback(() => fitView({ padding: 0.1, duration: 200 }), [fitView]);
-
-  return (
-    <>
-      <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, display: 'flex', gap: '8px' }}>
-        <Button size="small" icon={<PlusOutlined />} onClick={onAddBlockToThisPeer} title={t('AddBlockToThisPeerChain', 'Add Block to this Chain')} />
-        <Button size="small" icon={<ReloadOutlined />} onClick={onResetThisPeerChain} title={t('ResetThisPeerChain', 'Reset this Chain')} />
-        <Button size="small" icon={<ExpandAltOutlined />} onClick={handleFitView} title={t('FitView', 'Fit View')} />
-      </div>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnectInternal}
-        nodeTypes={passedNodeTypes}
-        edgeTypes={passedEdgeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
-      >
-        <Controls showInteractive={false} />
-        <Background gap={24} size={1.2} color="#efefef" />
-        <svg>
-          <defs>
-            <marker id="arrowhead-valid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#52c41a" />
-            </marker>
-            <marker id="arrowhead-invalid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#ff4d4f" />
-            </marker>
-            <marker id="arrowhead-default" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#aaa" />
-            </marker>
-          </defs>
-        </svg>
-      </ReactFlow>
-    </>
-  );
-};
-InnerDistributedFlowCanvasAndControls.displayName = "InnerDistributedFlowCanvasAndControls";
-
-const DistributedPeerFlow: React.FC<DistributedPeerFlowProps> = React.memo((props) => {
-  return (
-    <div data-peer-id={props['data-peer-id'] || props.peer.peerId} style={{ width: '100%', height: '300px', marginBottom: '20px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#f9f9f9', position: 'relative' }}>
-      <ReactFlowProvider>
-        <InnerDistributedFlowCanvasAndControls {...props} />
-      </ReactFlowProvider>
-    </div>
-  );
-});
-DistributedPeerFlow.displayName = 'DistributedPeerFlow';
+// Removed DistributedPeerFlowProps, InnerDistributedFlowCanvasAndControls, and DistributedPeerFlow
+// as they are now replaced by PeerChainVisualization.
 
 const DistributedPage: NextPage = () => {
   const { t } = useTranslation('common');
@@ -192,10 +81,11 @@ const DistributedPage: NextPage = () => {
   const [isTutorialVisible, setIsTutorialVisible] = useState(false);
   const [tutorialSteps, setTutorialSteps] = useState<TutorialStep[]>([]);
   const [currentTutorialKey, setCurrentTutorialKey] = useState<string | null>(null);
-  const [allTutorialData, setAllTutorialData] = useState<any | null>(null);
+  const [allTutorialData, setAllTutorialData] = useState<any | null>(null); // Handled by layout
 
-  const nodeTypes = useMemo(() => ({ genericBlock: FlowNodeBlock }), []);
-  const edgeTypes = useMemo(() => ({ customEdge: CustomEdge }), []);
+  // nodeTypes and edgeTypes are likely no longer needed here
+  // const nodeTypes = useMemo(() => ({ genericBlock: FlowNodeBlock }), []);
+  // const edgeTypes = useMemo(() => ({ customEdge: CustomEdge }), []);
 
   useEffect(() => {
     setTheoryIsLoading(true);
@@ -459,96 +349,48 @@ const DistributedPage: NextPage = () => {
       setTimeout(() => executeDistributedActionLogic(actionType, actionParams), 100);
       return;
     }
+    // activeTabKey state is managed by BlockchainPageLayout.
     executeDistributedActionLogic(actionType, actionParams);
   };
 
   return (
-    <>
-      <Head>
-        <title>{t('DistributedLedgerTechnology', 'Distributed Ledger Technology')} - {t('BlockchainDemo')}</title>
-      </Head>
-      <div style={{ padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <Typography.Title level={2} style={{ margin: 0 }}>
-            {t('DistributedLedgerPageTitle', 'Distributed Ledger Demo')}
-          </Typography.Title>
-          <Button icon={<QuestionCircleOutlined />} onClick={() => startTutorial('distributedTutorial')}>
-            {t('StartTutorial', 'Start Tutorial')}
-          </Button>
-        </div>
-
-        <Tabs activeKey={activeTabKey} onChange={setActiveTabKey}>
-          <Tabs.TabPane tab={t('InteractiveDemoTab', 'Interactive Demo')} key="1">
-            <Row gutter={[16, 24]}>
-              {peers.map((peer) => (
-                <Col key={peer.peerId} span={24} className="block-card-wrapper">
-                  <Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
-                    {t(peer.peerId, peer.peerId)}
-                  </Title>
-                  <DistributedPeerFlow
-                    peer={peer}
-                    miningStates={miningStates}
-                    onShowBlockModal={showBlockModal}
-                    nodeTypes={nodeTypes}
-                    edgeTypes={edgeTypes}
-                    onAddBlockToThisPeer={() => addBlockToPeerChain(peer.peerId)}
-                    onResetThisPeerChain={() => handleResetPeerChain(peer.peerId)}
-                    data-peer-id={peer.peerId} // Added for tutorial targeting
-                  />
-                </Col>
-              ))}
-            </Row>
-          </Tabs.TabPane>
-          <Tabs.TabPane tab={t('TheoryTab', 'Theory & Explanation')} key="2">
-            <div className="theory-content-markdown" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', padding: '10px' }}>
-              <MarkdownRenderer
-                markdownContent={theoryContent}
-                isLoading={theoryIsLoading}
-                error={theoryError}
-                className="tutorial-content-markdown"
-                loadingMessage={t('LoadingTheory', 'Loading theory...')}
-                errorMessagePrefix={t('ErrorLoadingTheoryPrefix', 'Error loading content:')}
-              />
-            </div>
-          </Tabs.TabPane>
-        </Tabs>
-
-        {isTutorialVisible && tutorialSteps.length > 0 && (
-          <TutorialDisplay
-            tutorialKey={currentTutorialKey || "distributedTutorial"}
-            steps={tutorialSteps}
-            isVisible={isTutorialVisible}
-            onClose={() => setIsTutorialVisible(false)}
-            onExecuteAction={handleExecuteTutorialAction}
-          />
-        )}
-        {selectedBlockInfo && (
-          <Modal
-            title={`${t('DistributedBlockDetails', 'Distributed Block Details')} - ${t('Peer', 'Peer')} ${selectedBlockInfo.peerId} - ${t('Block', 'Block')} #${selectedBlockInfo.block.blockNumber}`}
-            visible={isModalVisible}
-            onOk={handleModalClose}
-            onCancel={handleModalClose}
-            width={800}
-            footer={[ <AntButton key="close" onClick={handleModalClose}> {t('CloseButton', 'Close')} </AntButton> ]}
-          >
-            <BlockCard
-              blockNumber={selectedBlockInfo.block.blockNumber}
-              nonce={selectedBlockInfo.block.nonce}
-              data={selectedBlockInfo.block.data}
-              dataType="simple_text"
-              previousHash={selectedBlockInfo.block.previousHash}
-              currentHash={selectedBlockInfo.block.currentHash}
-              isValid={selectedBlockInfo.block.isValid}
-              onDataChange={(e) => handleDataChangeInModal(e.target.value)}
-              onNonceChange={(value) => handleNonceChangeInModal(value)}
-              onMine={handleMineInModal}
-              isMining={ miningStates[`${selectedBlockInfo.peerId}-${selectedBlockInfo.block.id}`] || false }
-              isFirstBlock={selectedBlockInfo.block.blockNumber === 1}
+    <BlockchainPageLayout
+      pageTitle={t('DistributedLedgerPageTitle', 'Distributed Ledger Demo')}
+      theoryDocPath="/docs/distributed_theory.md"
+      tutorialKey="distributedTutorial"
+      onExecuteTutorialAction={handleExecuteTutorialAction}
+    >
+      <Row gutter={[16, 24]}>
+        {peers.map((peer) => (
+          <Col key={peer.peerId} span={24} className="block-card-wrapper">
+            <Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
+              {t(peer.peerId, peer.peerId)}
+            </Title>
+            <PeerChainVisualization
+              peerId={peer.peerId}
+              chain={peer.chain}
+              nodeType="genericBlock"
+              miningStates={miningStates}
+              onShowBlockModal={(block) => showBlockModal(peer.peerId, block)}
+              onAddBlock={() => addBlockToPeerChain(peer.peerId)}
+              onResetChain={() => handleResetPeerChain(peer.peerId)}
             />
-          </Modal>
-        )}
-      </div>
-    </>
+          </Col>
+        ))}
+      </Row>
+      {selectedBlockInfo && (
+        <BlockDetailModal
+          visible={isModalVisible}
+          onClose={handleModalClose}
+          selectedBlockInfo={selectedBlockInfo}
+          miningState={miningStates[`${selectedBlockInfo.peerId}-${selectedBlockInfo.block.id}`] || false}
+          onMine={handleMineInModal}
+          onNonceChange={handleNonceChangeInModal}
+          blockDataType="simple_text"
+          onSimpleDataChange={handleDataChangeInModal}
+        />
+      )}
+    </BlockchainPageLayout>
   );
 };
 

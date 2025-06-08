@@ -3,26 +3,26 @@ import { NextPage } from 'next';
 import { useRouter } from 'next/router'; // Added useRouter
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
-import Head from 'next/head';
-import { Modal, Button, Space, Tabs, Typography } from 'antd'; // Added Tabs, Typography
-import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons'; // Added QuestionCircleOutlined
-// import ReactMarkdown from 'react-markdown'; // No longer directly used here
-import MarkdownRenderer from '@/components/Common/MarkdownRenderer'; // Import MarkdownRenderer
-import BlockCard from '@/components/Blockchain/BlockCard';
-import TutorialDisplay from '@/components/Tutorial/TutorialDisplay'; // Import TutorialDisplay
-import { TutorialStep } from '@/types/tutorial'; // Import TutorialStep
-// import CompactBlockCard from '@/components/Blockchain/CompactBlockCard'; // Comment out CompactBlockCard
-// import { ArcherContainer, ArcherElement } from 'react-archer'; // Added react-archer imports
+// Head, Tabs, MarkdownRenderer, TutorialDisplay, QuestionCircleOutlined will be removed or handled by Layout
+import { Modal, Button, Space, Typography } from 'antd'; // Modal might be removed if BlockDetailModal handles it all
+import { PlusOutlined } from '@ant-design/icons'; // Removed QuestionCircleOutlined
+// BlockCard import will be removed as BlockDetailModal uses it internally
+// import BlockCard from '@/components/Blockchain/BlockCard';
+// TutorialStep might still be needed if handleExecuteTutorialAction uses it, but likely not directly
+// import { TutorialStep } from '@/types/tutorial';
 import WhiteboardWrapper from '@/components/Blockchain/WhiteboardCanvas'; // Add this
+import BlockchainPageLayout from '@/components/Layout/BlockchainPageLayout'; // Import the new layout
+import BlockDetailModal from '@/components/Blockchain/BlockDetailModal'; // Import the new modal
+import useSimpleChain from '@/hooks/useSimpleChain'; // Import the new hook
 import {
   BlockType,
-  calculateHash,
-  checkValidity,
-  createInitialBlock,
-  MAX_NONCE,
-} from '@/lib/blockchainUtils';
+  // calculateHash, // Handled by hook
+  // checkValidity, // Handled by hook
+  // createInitialBlock, // Handled by hook
+  // MAX_NONCE, // Handled by hook
+} from '@/lib/blockchainUtils'; // Keep BlockType if used in function signatures
 
-// Define constants for initial chain setup at a scope accessible by useEffect and handleResetChain
+// Define constants for initial chain setup - these will be passed to the hook
 const INITIAL_CHAIN_LENGTH = 5;
 const PRECALCULATED_NONCES = [6359, 19780, 10510, 13711, 36781];
 
@@ -31,121 +31,60 @@ const BlockchainIndexPage: NextPage = () => {
   const { t } = useTranslation('common');
   const router = useRouter(); // Initialize useRouter
 
-  // Tutorial State
-  const [isTutorialVisible, setIsTutorialVisible] = useState(false);
-  const [tutorialSteps, setTutorialSteps] = useState<TutorialStep[]>([]);
-  const [currentTutorialKey, setCurrentTutorialKey] = useState<string | null>(null);
-  const [allTutorialData, setAllTutorialData] = useState<any | null>(null); // Using any for raw JSON
-
-  // State for theory content
-  const [theoryContent, setTheoryContent] = useState<string>('');
-  const [theoryIsLoading, setTheoryIsLoading] = useState<boolean>(true);
-  const [theoryError, setTheoryError] = useState<string | null>(null);
-
-  const [activeTabKey, setActiveTabKey] = useState<string>("1"); // State for active tab
-
-  const [chain, setChain] = useState<BlockType[]>([]);
-  const [miningStates, setMiningStates] = useState<{[key: string]: boolean}>({});
+  const {
+    chain,
+    miningStates,
+    initializeChain,
+    addBlock,
+    resetChain,
+    updateBlockData,
+    updateBlockNonce,
+    mineBlock,
+    removeBlock,
+  } = useSimpleChain();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedBlock, setSelectedBlock] = useState<BlockType | null>(null);
 
   useEffect(() => {
-    // Fetch Tutorial Data
-    fetch('/data/tutorials/blockchain_tutorial_en.json')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setAllTutorialData(data);
-      })
-      .catch((error) => {
-        console.error("Could not fetch tutorial data:", error);
-      });
+    const initialConfig = {
+      initialLength: INITIAL_CHAIN_LENGTH,
+      initialNonces: PRECALCULATED_NONCES,
+      makeBlockInvalidAtIndex: 1, // Make the second block (index 1) invalid
+      // initialDatas: if needed, generate them here based on INITIAL_CHAIN_LENGTH
+    };
+    initializeChain(initialConfig);
+  }, [initializeChain]);
 
-    // Fetch Theory Content
-    setTheoryIsLoading(true);
-    setTheoryError(null);
-    fetch('/docs/blockchain.md')
-      .then(async (res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status} - ${res.statusText}`);
-        }
-        return res.text();
-      })
-      .then((text) => {
-        setTheoryContent(text);
-      })
-      .catch((error) => {
-        console.error("Could not fetch theory content:", error);
-        setTheoryError(error.message);
-        setTheoryContent(''); // Clear content on error
-      })
-      .finally(() => {
-        setTheoryIsLoading(false);
-      });
+  // Removed local updateChainCascading function, now internal to useSimpleChain
 
-    // Initial chain setup
-    const newChain: BlockType[] = [];
-    let previousHash = '0'.repeat(64);
-    // Using PRECALCULATED_NONCES from the broader scope
-
-    for (let i = 0; i < INITIAL_CHAIN_LENGTH; i++) {
-      const blockNumber = i + 1;
-      const data = `Block ${blockNumber} Data`;
-      let currentPreviousHash = previousHash;
-      if (i === 1) { // For the second block, make its previousHash invalid
-        currentPreviousHash = "invalidhash1234567890abcdefinvalidhash1234567890abcdef";
-      }
-      const block = createInitialBlock(
-        blockNumber,
-        data,
-        currentPreviousHash, // Use potentially modified previousHash
-        // Use PRECALCULATED_NONCES, ensuring it matches length of INITIAL_CHAIN_LENGTH
-        (data === `Block ${blockNumber} Data` && PRECALCULATED_NONCES[i] !== undefined) ? PRECALCULATED_NONCES[i] : undefined
-      );
-      newChain.push(block);
-      previousHash = block.currentHash; // Correctly set for the *next* block's previousHash
+  const handleDataChangeInModal = (blockId: string, newData: string) => {
+    updateBlockData(blockId, newData);
+    // Update selectedBlock if it's the one being edited
+    if (selectedBlock && selectedBlock.id === blockId) {
+      const updatedBlock = chain.find(b => b.id === blockId);
+      if (updatedBlock) setSelectedBlock(updatedBlock); // This might not reflect immediately due to async nature of hook update
     }
-    setChain(newChain);
-  }, []);
-
-  const updateChainCascading = (updatedChain: BlockType[], startIndex: number): BlockType[] => {
-    for (let i = startIndex; i < updatedChain.length; i++) {
-      if (i > 0) {
-        updatedChain[i].previousHash = updatedChain[i - 1].currentHash;
-      } else {
-        updatedChain[i].previousHash = '0'.repeat(64);
-      }
-      updatedChain[i].currentHash = calculateHash(
-        updatedChain[i].blockNumber,
-        updatedChain[i].nonce,
-        updatedChain[i].data,
-        updatedChain[i].previousHash
-      );
-      updatedChain[i].isValid = checkValidity(updatedChain[i].currentHash);
-    }
-    return [...updatedChain];
   };
 
-  const handleDataChange = (blockId: string, newData: string) => {
-    setChain((prevChain) => {
-      const blockIndex = prevChain.findIndex((b) => b.id === blockId);
-      if (blockIndex === -1) return prevChain;
-      const newChain = [...prevChain];
-      newChain[blockIndex] = { ...newChain[blockIndex], data: newData };
-      const updatedFullChain = updateChainCascading(newChain, blockIndex);
-      if (selectedBlock && selectedBlock.id === blockId) {
-        setSelectedBlock(updatedFullChain[blockIndex]);
-      }
-      return updatedFullChain;
-    });
+  const handleNonceChangeInModal = (blockId: string, newNonceValue: string | number | null | undefined) => {
+    const newNonce = Number(newNonceValue ?? 0);
+    updateBlockNonce(blockId, newNonce);
+    if (selectedBlock && selectedBlock.id === blockId) {
+      const updatedBlock = chain.find(b => b.id === blockId);
+      if (updatedBlock) setSelectedBlock(updatedBlock);
+    }
   };
 
-  const handleResetChain = () => {
+  const handleMineInModal = async (blockId: string) => {
+    await mineBlock(blockId);
+    if (selectedBlock && selectedBlock.id === blockId) {
+      const updatedBlock = chain.find(b => b.id === blockId);
+       if (updatedBlock) setSelectedBlock(updatedBlock);
+    }
+  };
+
+  const handleResetChainWithModal = () => {
     Modal.confirm({
       title: t('ConfirmResetChainTitle', 'Are you sure you want to reset the chain?'),
       content: t('ConfirmResetChainContent', 'This will restore the blockchain to its initial state. All current changes will be lost.'),
@@ -153,29 +92,17 @@ const BlockchainIndexPage: NextPage = () => {
       okType: 'danger',
       cancelText: t('Cancel', 'Cancel'),
       onOk: () => {
-        const newInitialChain: BlockType[] = [];
-        let previousHash = '0'.repeat(64);
-
-        for (let i = 0; i < INITIAL_CHAIN_LENGTH; i++) {
-          const blockNumber = i + 1;
-          const data = `Block ${blockNumber} Data`;
-          const block = createInitialBlock(
-            blockNumber,
-            data,
-            previousHash,
-            PRECALCULATED_NONCES[i]
-          );
-          newInitialChain.push(block);
-          previousHash = block.currentHash;
-        }
-        setChain(newInitialChain);
-        // Note: The deliberate invalid link for testing (if (i === 1)...) is NOT reapplied on reset,
-        // so the reset chain will be valid. This is generally desired for a reset function.
+        const initialConfig = {
+          initialLength: INITIAL_CHAIN_LENGTH,
+          initialNonces: PRECALCULATED_NONCES,
+          // makeBlockInvalidAtIndex is not applied on reset in the original logic
+        };
+        resetChain(initialConfig);
       },
     });
   };
 
-  const handleRemoveBlock = (blockIdToRemove: string) => {
+  const handleRemoveBlockWithModal = (blockIdToRemove: string) => {
     Modal.confirm({
       title: t('ConfirmRemoveBlockTitle', 'Are you sure you want to remove this block?'),
       content: t('ConfirmRemoveBlockContent', 'This action cannot be undone. The chain will be revalidated.'),
@@ -183,89 +110,12 @@ const BlockchainIndexPage: NextPage = () => {
       okType: 'danger',
       cancelText: t('Cancel', 'Cancel'),
       onOk: () => {
-        setChain((prevChain) => {
-          const originalIndex = prevChain.findIndex(b => b.id === blockIdToRemove);
-          if (originalIndex === -1) return prevChain; // Should not happen if UI is correct
-
-          const newChain = prevChain.filter(block => block.id !== blockIdToRemove);
-
-          if (newChain.length === 0) return [];
-
-          // Determine the starting index for cascading updates
-          let startIndex = 0; // Default to 0 for safety, will be adjusted
-          if (originalIndex < newChain.length) {
-            // If a block was removed from the middle or start,
-            // the block that took its place (or the new first block) is the starting point.
-            startIndex = originalIndex;
-          } else if (newChain.length > 0) {
-            // If the last block was removed, no specific relinking is needed for subsequent blocks,
-            // but we might still want to ensure the new last block's validity is checked if its properties changed.
-            // However, updateChainCascading from 0 or a valid index will handle this.
-            // A simpler approach: if last block removed, no specific start index for relinking needed.
-            // updateChainCascading will just re-validate. Let's make sure it handles this.
-            // If originalIndex was last, newChain.length = originalIndex. Start from new last block if exists.
-            startIndex = newChain.length -1;
-            if (startIndex < 0) startIndex = 0; // If only one block left, or list becomes empty (handled above)
-          }
-
-          // Special handling if the first block (original index 0) was removed
-          if (originalIndex === 0 && newChain.length > 0) {
-            newChain[0].previousHash = "0".repeat(64); // The new first block becomes genesis
-            // Block number might also need adjustment if we want strict sequential numbering starting from 1
-            // For now, block numbers will retain their original values, which might lead to gaps.
-            // This could be a future enhancement to re-number blocks.
-          }
-
-          return updateChainCascading(newChain, startIndex);
-        });
+        removeBlock(blockIdToRemove);
       },
     });
   };
 
-  const handleNonceChange = (blockId: string, newNonceValue: string | number | null | undefined) => {
-    const newNonce = Number(newNonceValue ?? 0);
-    setChain((prevChain) => {
-      const blockIndex = prevChain.findIndex((b) => b.id === blockId);
-      if (blockIndex === -1) return prevChain;
-      const newChain = [...prevChain];
-      newChain[blockIndex] = { ...newChain[blockIndex], nonce: newNonce };
-      const updatedFullChain = updateChainCascading(newChain, blockIndex);
-      if (selectedBlock && selectedBlock.id === blockId) {
-        setSelectedBlock(updatedFullChain[blockIndex]);
-      }
-      return updatedFullChain;
-    });
-  };
-
-  const handleMine = useCallback(async (blockId: string) => {
-    setMiningStates(prev => ({...prev, [blockId]: true}));
-    await new Promise(resolve => setTimeout(resolve, 0));
-    setChain((prevChain) => {
-      const blockIndex = prevChain.findIndex((b) => b.id === blockId);
-      if (blockIndex === -1) {
-        setMiningStates(prev => ({...prev, [blockId]: false}));
-        return prevChain;
-      }
-      const newChain = [...prevChain];
-      const blockToMine = newChain[blockIndex];
-      let foundNonce = blockToMine.nonce;
-      for (let i = 0; i <= MAX_NONCE; i++) {
-        const hash = calculateHash(blockToMine.blockNumber, i, blockToMine.data, blockToMine.previousHash);
-        if (checkValidity(hash)) {
-          foundNonce = i;
-          break;
-        }
-      }
-      newChain[blockIndex] = {...blockToMine, nonce: foundNonce};
-      const finalChain = updateChainCascading(newChain, blockIndex);
-      if (selectedBlock && selectedBlock.id === blockId) {
-        setSelectedBlock(finalChain[blockIndex]);
-      }
-      setMiningStates(prev => ({...prev, [blockId]: false}));
-      return finalChain;
-    });
-  }, [selectedBlock]);
-
+  // showModal, handleOk, handleCancel remain the same for controlling modal visibility
   const showModal = (block: BlockType) => {
     setSelectedBlock(block);
     setIsModalVisible(true);
@@ -281,33 +131,14 @@ const BlockchainIndexPage: NextPage = () => {
     setSelectedBlock(null);
   };
 
-  // Find the currently mining block's ID (simplified)
   const currentMiningBlockId = useMemo(() => {
     return Object.entries(miningStates).find(([_id, isMining]) => isMining)?.[0] || null;
   }, [miningStates]);
 
-  const handleAddBlock = () => {
-    setChain((prevChain) => {
-      if (prevChain.length === 0) {
-        // If chain is empty, create a genesis block
-        // createInitialBlock automatically mines if no nonce is provided.
-        const newBlock = createInitialBlock(1, 'Genesis Block', '0'.repeat(64));
-        return [newBlock];
-      }
-      const lastBlock = prevChain[prevChain.length - 1];
-      const newBlockNumber = lastBlock.blockNumber + 1;
-      // createInitialBlock will mine if no nonce is provided.
-      // This new block will be valid and correctly linked.
-      const newBlock = createInitialBlock(
-        newBlockNumber,
-        `Block ${newBlockNumber} Data`,
-        lastBlock.currentHash // Link to the actual current hash of the last block
-      );
-      return [...prevChain, newBlock];
-    });
-  };
+  // handleAddBlock now directly uses the hook's addBlock
+  const handleAddBlockFromHook = addBlock;
 
-  // Encapsulate the existing switch logic into a new function
+  // Tutorial Action Logic
   const executeActionLogic = (actionType: string, actionParams?: any) => {
     switch (actionType) {
       case 'NAVIGATE_TO_PAGE':
@@ -456,90 +287,37 @@ const BlockchainIndexPage: NextPage = () => {
         return;
       }
     }
+    // The main executeActionLogic and its caller handleExecuteTutorialAction should be preserved.
+    // The old startTutorial function that sets steps and visibility is removed.
     executeActionLogic(actionType, actionParams);
   };
 
+  // The actual activeTabKey state is now managed by BlockchainPageLayout.
+  // If handleExecuteTutorialAction needs to switch tabs, it might need a different approach
+  // or the layout could expose a function to do so, or this logic is simplified.
+  // For now, assuming the layout handles tab display and this page only provides content.
+  // The original logic for handleExecuteTutorialAction switching tabs if not on "1" for demo actions
+  // will be temporarily broken or needs rethinking if layout doesn't expose tab control.
+  // However, the tutorial steps themselves should ideally handle navigation if a specific tab is required.
+
   return (
-    <>
-      <Head>
-        <title>{String(t('Blockchain', 'Blockchain'))} - {String(t('Blockchain Demo'))}</title>
-      </Head>
-      <div style={{ padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <Typography.Title level={2} style={{ margin: 0 }}>
-            {t('BlockchainPageTitle', 'Blockchain Demonstration')}
-          </Typography.Title>
-          <Button icon={<QuestionCircleOutlined />} onClick={() => startTutorial('blockchainTutorial')}>
-            {t('StartTutorial', 'Start Tutorial')}
-          </Button>
-        </div>
-
-        <Tabs activeKey={activeTabKey} onChange={setActiveTabKey}> {/* Control active tab */}
-          <Tabs.TabPane tab={t('InteractiveDemoTab', 'Interactive Demo')} key="1">
-            <WhiteboardWrapper
-              chain={chain}
-              onNodeClick={showModal}
-              miningBlockId={currentMiningBlockId}
-              onNodeRemove={handleRemoveBlock}
-              onAddBlock={handleAddBlock}
-              onResetChain={handleResetChain}
-            />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab={t('TheoryTab', 'Theory & Explanation')} key="2">
-            <div style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', padding: '10px' }}>
-              <MarkdownRenderer
-                markdownContent={theoryContent}
-                isLoading={theoryIsLoading}
-                error={theoryError}
-                className="tutorial-content-markdown" // Use the existing class for styling
-                loadingMessage={t('LoadingTheory', 'Loading theory...')}
-                errorMessagePrefix={t('ErrorLoadingTheoryPrefix', 'Error loading content:')}
-              />
-            </div>
-          </Tabs.TabPane>
-        </Tabs>
-
-        {isTutorialVisible && tutorialSteps.length > 0 && (
-          <TutorialDisplay
-            tutorialKey={currentTutorialKey || "blockchainTutorial"}
-            steps={tutorialSteps}
-            isVisible={isTutorialVisible}
-            onClose={() => setIsTutorialVisible(false)}
-            onExecuteAction={handleExecuteTutorialAction}
-          />
-        )}
-
-        {/* Remove or comment out:
-        <FloatButton
-          icon={<PlusOutlined />}
-          type="primary"
-          tooltip={t('AddBlockTooltip', 'Add a new block to the end of the chain')}
-          onClick={handleAddBlock}
-          style={{ right: 24, bottom: 100 }}
-        /> */}
-
-        {/* Remove or comment out the old ArcherElement mapping:
-        {chain.map((block, index) => (
-          <ArcherElement
-            key={block.id}
-            id={`block-${block.id}`}
-            relations={index < chain.length - 1 ? [{ ... }] : undefined}
-          >
-            <div style={{ marginRight: '30px', marginLeft: '10px', flexShrink: 0 }}>
-              <CompactBlockCard
-                blockNumber={block.blockNumber}
-                currentHash={block.currentHash}
-                previousHash={block.previousHash}
-                isValid={block.isValid}
-                onClick={() => showModal(block)}
-              />
-            </div>
-          </ArcherElement>
-        ))}
-        */}
-        {selectedBlock && (
-          <Modal
-            title={`${t('BlockDetailsTitle', 'Block Details')} - ${t('Block', 'Block')} #${selectedBlock.blockNumber}`}
+    <BlockchainPageLayout
+      pageTitle={t('BlockchainPageTitle', 'Blockchain Demonstration')}
+      theoryDocPath="/docs/blockchain.md"
+      tutorialKey="blockchainTutorial"
+      onExecuteTutorialAction={handleExecuteTutorialAction} // Pass the existing handler
+    >
+      <WhiteboardWrapper
+        chain={chain}
+        onNodeClick={showModal}
+        miningBlockId={currentMiningBlockId}
+        onNodeRemove={handleRemoveBlock}
+        onAddBlock={handleAddBlock}
+        onResetChain={handleResetChain}
+      />
+      {selectedBlock && (
+        <Modal
+          title={`${t('BlockDetailsTitle', 'Block Details')} - ${t('Block', 'Block')} #${selectedBlock.blockNumber}`}
             visible={isModalVisible}
             onOk={handleOk}
             onCancel={handleCancel}

@@ -22,21 +22,26 @@ import MarkdownRenderer from '@/components/Common/MarkdownRenderer';
 import TutorialDisplay from '@/components/Tutorial/TutorialDisplay';
 import { TutorialStep } from '@/types/tutorial';
 import BlockCard from "@/components/Blockchain/BlockCard";
-import ReactFlow, {
-  ReactFlowProvider,
-  Controls,
-  Background,
-  Node,
-  Edge,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  Connection,
-  useReactFlow,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import CoinbaseFlowNode, { CoinbaseFlowNodeData } from '@/components/Blockchain/CoinbaseFlowNode'; // Reusing CoinbaseFlowNode
-import CustomEdge, { CustomEdgeData } from '@/components/Blockchain/CustomEdge';
+// ReactFlow specific imports might be removable
+// import ReactFlow, {
+//   ReactFlowProvider,
+//   Controls,
+//   Background,
+//   Node,
+//   Edge,
+//   useNodesState,
+//   useEdgesState,
+//   addEdge,
+//   Connection,
+//   useReactFlow,
+// } from 'reactflow';
+import 'reactflow/dist/style.css'; // Keep for global styles
+// CoinbaseFlowNode and CustomEdge imports might be removable
+// import CoinbaseFlowNode, { CoinbaseFlowNodeData } from '@/components/Blockchain/CoinbaseFlowNode'; // Reusing CoinbaseFlowNode
+// import CustomEdge, { CustomEdgeData } from '@/components/Blockchain/CustomEdge';
+import PeerChainVisualization from '@/components/Blockchain/PeerChainVisualization'; // Import the new component
+import BlockDetailModal from '@/components/Blockchain/BlockDetailModal'; // Import the new modal
+import BlockchainPageLayout from '@/components/Layout/BlockchainPageLayout'; // Import the layout
 import {
   BlockType,
   TransactionType,
@@ -59,123 +64,9 @@ interface Peer {
   chain: BlockType[];
 }
 
-interface TokenPeerFlowProps {
-  peer: Peer;
-  miningStates: { [key: string]: boolean };
-  onShowBlockModal: (peerId: string, block: BlockType) => void;
-  nodeTypes: any;
-  edgeTypes: any;
-  onAddBlockToThisPeer: () => void;
-  onResetThisPeerChain: () => void;
-}
+// Removed TokenPeerFlowProps, InnerTokenFlowCanvasAndControls, and PeerBlockchainFlow
+// as they are now replaced by PeerChainVisualization.
 
-const InnerTokenFlowCanvasAndControls: React.FC<TokenPeerFlowProps> = ({
-  peer,
-  miningStates: globalMiningStates,
-  onShowBlockModal,
-  nodeTypes: passedNodeTypes,
-  edgeTypes: passedEdgeTypes,
-  onAddBlockToThisPeer,
-  onResetThisPeerChain,
-}) => {
-  const { peerId, chain: peerChain } = peer;
-  const [nodes, setNodes, onNodesChange] = useNodesState<CoinbaseFlowNodeData>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdgeData>([]);
-  const { fitView } = useReactFlow();
-  const { t } = useTranslation('common');
-
-  useEffect(() => {
-    const newNodesMapped: Node<CoinbaseFlowNodeData>[] = peerChain.map((block, index) => ({
-      id: `${peerId}-${block.id}`,
-      type: 'tokenBlock',
-      position: { x: index * 240, y: 50 },
-      data: {
-        id: `${peerId}-${block.id}`,
-        'data-block-id': block.id,
-        blockNumber: block.blockNumber,
-        currentHash: block.currentHash,
-        previousHash: block.previousHash,
-        isValid: block.isValid,
-        coinbaseTx: block.coinbase,
-        p2pTransactions: Array.isArray(block.data) ? block.data as TransactionType[] : [],
-        onClick: () => onShowBlockModal(peer.peerId, block),
-      },
-    }));
-    setNodes(newNodesMapped);
-
-    const newEdgesMapped: Edge<CustomEdgeData>[] = [];
-    for (let i = 0; i < peerChain.length - 1; i++) {
-      const sourceBlock = peerChain[i];
-      const targetBlock = peerChain[i + 1];
-      const isLinkValid = sourceBlock.currentHash === targetBlock.previousHash;
-      const miningKeySource = `${peerId}-${sourceBlock.id}`;
-      const miningKeyTarget = `${peerId}-${targetBlock.id}`;
-      newEdgesMapped.push({
-        id: `edge-${peerId}-${sourceBlock.id}-to-${targetBlock.id}`,
-        source: `${peerId}-${sourceBlock.id}`,
-        target: `${peerId}-${targetBlock.id}`,
-        type: 'customEdge',
-        data: {
-          isValid: isLinkValid,
-          isAnimating: globalMiningStates[miningKeySource] || globalMiningStates[miningKeyTarget],
-        },
-      });
-    }
-    setEdges(newEdgesMapped);
-  }, [peerChain, peerId, onShowBlockModal, setNodes, setEdges, globalMiningStates, peer]);
-
-  const onConnectInternal = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
-  const handleFitView = useCallback(() => fitView({ padding: 0.1, duration: 200 }), [fitView]);
-
-  return (
-    <>
-      <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, display: 'flex', gap: '8px' }}>
-        <Button size="small" icon={<PlusOutlined />} onClick={onAddBlockToThisPeer} title={t('AddBlockToThisPeerChain', 'Add Block to this Chain')} />
-        <Button size="small" icon={<ReloadOutlined />} onClick={onResetThisPeerChain} title={t('ResetThisPeerChain', 'Reset this Chain')} />
-        <Button size="small" icon={<ExpandAltOutlined />} onClick={handleFitView} title={t('FitView', 'Fit View')} />
-      </div>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnectInternal}
-        nodeTypes={passedNodeTypes}
-        edgeTypes={passedEdgeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
-      >
-        <Controls showInteractive={false} />
-        <Background gap={24} size={1.2} color="#efefef" />
-        <svg>
-          <defs>
-            <marker id="arrowhead-valid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#52c41a" />
-            </marker>
-            <marker id="arrowhead-invalid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#ff4d4f" />
-            </marker>
-            <marker id="arrowhead-default" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#aaa" />
-            </marker>
-          </defs>
-        </svg>
-      </ReactFlow>
-    </>
-  );
-};
-InnerTokenFlowCanvasAndControls.displayName = "InnerTokenFlowCanvasAndControls";
-
-const PeerBlockchainFlow: React.FC<TokenPeerFlowProps> = React.memo((props) => {
-  return (
-    <div data-peer-id={props.peer.peerId} style={{ width: '100%', height: '350px', marginBottom: '20px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#f9f9f9', position: 'relative' }}>
-      <ReactFlowProvider>
-        <InnerTokenFlowCanvasAndControls {...props} />
-      </ReactFlowProvider>
-    </div>
-  );
-});
-PeerBlockchainFlow.displayName = 'PeerBlockchainFlow';
 
 const getInitialCoinbaseForTokens = (blockNum: number, peerInitial: string): CoinbaseTransactionType | undefined => {
   // Blocks on the /tokens page primarily focus on P2P transactions.
@@ -217,10 +108,39 @@ const TokensPage: NextPage = () => {
   const [isTutorialVisible, setIsTutorialVisible] = useState(false);
   const [tutorialSteps, setTutorialSteps] = useState<TutorialStep[]>([]);
   const [currentTutorialKey, setCurrentTutorialKey] = useState<string | null>(null);
-  const [allTutorialData, setAllTutorialData] = useState<any | null>(null);
+  const [allTutorialData, setAllTutorialData] = useState<any | null>(null); // Handled by layout
 
-  const nodeTypes = useMemo(() => ({ tokenBlock: CoinbaseFlowNode }), []);
-  const edgeTypes = useMemo(() => ({ customEdge: CustomEdge }), []);
+  // nodeTypes and edgeTypes are likely no longer needed here
+  // const nodeTypes = useMemo(() => ({ tokenBlock: CoinbaseFlowNode }), []);
+  // const edgeTypes = useMemo(() => ({ customEdge: CustomEdge }), []);
+
+  // Extracted logic for applying P2P transaction changes for the Tokens page
+  const handleApplyP2PTxChangesTokens = useCallback((txId: string) => {
+    if (!selectedBlockInfo) return;
+    const changes = editingTxState[txId];
+    if (changes) {
+      setPeers(prevPeers => prevPeers.map(p => {
+        if (p.peerId === selectedBlockInfo.peerId) {
+          let blockIndex = -1;
+          const updatedChain = p.chain.map((b, idx) => {
+            if (b.id === selectedBlockInfo.block.id) {
+              blockIndex = idx;
+              const oldP2PTxs = Array.isArray(b.data) ? b.data as TransactionType[] : [];
+              const updatedP2PTxs = oldP2PTxs.map(tItem =>
+                tItem.id === txId ? { ...tItem, ...changes } : tItem
+              );
+              return { ...b, data: updatedP2PTxs };
+            }
+            return b;
+          });
+          if (blockIndex === -1) return p;
+          setEditingTxState(prevES => { const nES = { ...prevES }; delete nES[txId]; return nES; });
+          return { ...p, chain: updateChainCascading(updatedChain, blockIndex) };
+        }
+        return p;
+      }));
+    }
+  }, [selectedBlockInfo, editingTxState, setPeers, setEditingTxState]);
 
   useEffect(() => {
     setTheoryIsLoading(true);
@@ -504,145 +424,45 @@ const TokensPage: NextPage = () => {
   };
 
   return (
-    <>
-      <Head>
-        <title>{t('Tokens')} - {t('BlockchainDemo')}</title>
-      </Head>
-      <div style={{ padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <Typography.Title level={2} style={{ margin: 0 }}>
-            {t('TokensPageTitle', 'Token Transactions Demo')}
-          </Typography.Title>
-          <Button icon={<QuestionCircleOutlined />} onClick={() => startTutorial('tokensTutorial')}>
-            {t('StartTutorial', 'Start Tutorial')}
-          </Button>
-        </div>
-
-        <Tabs activeKey={activeTabKey} onChange={setActiveTabKey}>
-          <Tabs.TabPane tab={t('InteractiveDemoTab', 'Interactive Demo')} key="1">
-            <Row gutter={[16, 24]}>
-              {peers.map((peer) => (
-                <Col key={peer.peerId} span={24} className="block-card-wrapper">
-                  <Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
-                    {t(peer.peerId, peer.peerId)}
-                  </Title>
-                  <PeerBlockchainFlow
-                    peer={peer}
-                    miningStates={miningStates}
-                    onShowBlockModal={showBlockModal}
-                    nodeTypes={nodeTypes}
-                    edgeTypes={edgeTypes}
-                    onAddBlockToThisPeer={() => addBlockToPeerChain(peer.peerId)}
-                    onResetThisPeerChain={() => handleResetPeerChain(peer.peerId)}
-                  />
-                </Col>
-              ))}
-            </Row>
-          </Tabs.TabPane>
-          <Tabs.TabPane tab={t('TheoryTab', 'Theory & Explanation')} key="2">
-            <div className="theory-content-markdown" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', padding: '10px' }}>
-              <MarkdownRenderer
-                markdownContent={theoryContent}
-                isLoading={theoryIsLoading}
-                error={theoryError}
-                className="tutorial-content-markdown"
-                loadingMessage={t('LoadingTheory', 'Loading theory...')}
-                errorMessagePrefix={t('ErrorLoadingTheoryPrefix', 'Error loading content:')}
-              />
-            </div>
-          </Tabs.TabPane>
-        </Tabs>
-
-        {isTutorialVisible && tutorialSteps.length > 0 && (
-          <TutorialDisplay
-            tutorialKey={currentTutorialKey || "tokensTutorial"}
-            steps={tutorialSteps}
-            isVisible={isTutorialVisible}
-            onClose={() => setIsTutorialVisible(false)}
-            onExecuteAction={handleExecuteTutorialAction}
-          />
-        )}
-        {selectedBlockInfo && (
-          <Modal
-            title={`${t('TokenBlockDetails', 'Token Block Details')} - ${t('Peer', 'Peer')} ${selectedBlockInfo.peerId} - ${t('Block', 'Block')} #${selectedBlockInfo.block.blockNumber}`}
-            visible={isModalVisible}
-            onOk={handleModalClose}
-            onCancel={handleModalClose}
-            width={800}
-            footer={[ <AntButton key="close" onClick={handleModalClose}> {t('CloseButton', 'Close')} </AntButton> ]}
-          >
-            <BlockCard
-              blockNumber={selectedBlockInfo.block.blockNumber}
-              nonce={selectedBlockInfo.block.nonce}
-              coinbase={selectedBlockInfo.block.coinbase}
-              data={Array.isArray(selectedBlockInfo.block.data) ? selectedBlockInfo.block.data : []}
-              dataType="transactions"
-              previousHash={selectedBlockInfo.block.previousHash}
-              currentHash={selectedBlockInfo.block.currentHash}
-              isValid={selectedBlockInfo.block.isValid}
-              onNonceChange={(value) => handleNonceChangeInModal(value)}
-              onMine={handleMineInModal}
-              isMining={ miningStates[`${selectedBlockInfo.peerId}-${selectedBlockInfo.block.id}`] || false }
-              isFirstBlock={selectedBlockInfo.block.blockNumber === 1}
+    <BlockchainPageLayout
+      pageTitle={t('TokensPageTitle', 'Token Transactions Demo')}
+      theoryDocPath="/docs/tokens_theory.md"
+      tutorialKey="tokensTutorial"
+      onExecuteTutorialAction={handleExecuteTutorialAction}
+    >
+      <Row gutter={[16, 24]}>
+        {peers.map((peer) => (
+          <Col key={peer.peerId} span={24} className="block-card-wrapper">
+            <Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
+              {t(peer.peerId, peer.peerId)}
+            </Title>
+            <PeerChainVisualization
+              peerId={peer.peerId}
+              chain={peer.chain}
+              nodeType="tokenBlock"
+              miningStates={miningStates}
+              onShowBlockModal={(block) => showBlockModal(peer.peerId, block)}
+              onAddBlock={() => addBlockToPeerChain(peer.peerId)}
+              onResetChain={() => handleResetPeerChain(peer.peerId)}
             />
-            {/* Coinbase editing Card removed as selectedBlockInfo.block.coinbase will be undefined */}
-            {Array.isArray(selectedBlockInfo.block.data) && selectedBlockInfo.block.data.length > 0 && (
-              <Card size="small" key={`${selectedBlockInfo.block.id}-p2p-edit-tokens`} style={{ marginTop: "5px", backgroundColor: "#f0f0f0" }}>
-                <Typography.Text strong>{t("EditP2PTxs", "Edit P2P Txs")}</Typography.Text>
-                {selectedBlockInfo.block.data.map((tx, txIndex) => (
-                  <Space direction="vertical" key={tx.id} style={{ width: "100%", marginTop: "5px", paddingTop: "5px", borderTop: "1px dashed #ccc" }} data-p2p-tx-index={txIndex}>
-                    <Input addonBefore={t("From")}
-                      value={editingTxState[tx.id]?.from ?? tx.from}
-                      onChange={(e) => handleP2PTransactionChangeInModal(tx.id, "from", e.target.value)}
-                      data-field-name="from"
-                    />
-                    <Input addonBefore={t("To")}
-                      value={editingTxState[tx.id]?.to ?? tx.to}
-                      onChange={(e) => handleP2PTransactionChangeInModal(tx.id, "to", e.target.value)}
-                      data-field-name="to"
-                    />
-                    <Input addonBefore={t("Value")}
-                      value={editingTxState[tx.id]?.value?.toString() ?? tx.value.toString()}
-                      onChange={(e) => handleP2PTransactionChangeInModal(tx.id, "value", e.target.value)}
-                      data-field-name="value"
-                    />
-                    <AntButton onClick={() => { /* Apply P2P Tx Changes Logic */
-                        if(selectedBlockInfo){
-                            const changes = editingTxState[tx.id];
-                            if (changes) {
-                                setPeers(prevPeers => prevPeers.map(p => {
-                                  if (p.peerId === selectedBlockInfo.peerId) {
-                                      let blockIndex = -1;
-                                      const updatedChain = p.chain.map((b, idx) => {
-                                          if (b.id === selectedBlockInfo.block.id) {
-                                              blockIndex = idx;
-                                              const oldP2PTxs = Array.isArray(b.data) ? b.data as TransactionType[] : [];
-                                              const updatedP2PTxs = oldP2PTxs.map(tItem =>
-                                                  tItem.id === tx.id ? { ...tItem, ...changes } : tItem
-                                              );
-                                              return { ...b, data: updatedP2PTxs };
-                                          }
-                                          return b;
-                                      });
-                                      if (blockIndex === -1) return p;
-                                      setEditingTxState(prevES => { const nES = {...prevES}; delete nES[tx.id]; return nES; });
-                                      return { ...p, chain: updateChainCascading(updatedChain, blockIndex) };
-                                  }
-                                  return p;
-                                }));
-                            }
-                        }
-                    }} type="dashed" size="small">
-                      {t("ApplyTxChanges", "Apply Changes to Tx")} {tx.id.substring(0, 4)}...
-                    </AntButton>
-                  </Space>
-                ))}
-              </Card>
-            )}
-          </Modal>
-        )}
-      </div>
-    </>
+          </Col>
+        ))}
+      </Row>
+      {selectedBlockInfo && (
+        <BlockDetailModal
+          visible={isModalVisible}
+          onClose={handleModalClose}
+          selectedBlockInfo={selectedBlockInfo}
+          miningState={miningStates[`${selectedBlockInfo.peerId}-${selectedBlockInfo.block.id}`] || false}
+          onMine={handleMineInModal}
+          onNonceChange={handleNonceChangeInModal}
+          blockDataType="transactions_only" // Coinbase editing is not applicable here
+          onP2PTransactionChange={handleP2PTransactionChangeInModal}
+          editingTxState={editingTxState}
+          onApplyP2PTxChanges={handleApplyP2PTxChangesTokens} // Pass extracted function
+        />
+      )}
+    </BlockchainPageLayout>
   );
 };
 
