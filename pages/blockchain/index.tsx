@@ -1,20 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Added useMemo
-import { NextPage } from 'next';
-import { useRouter } from 'next/router'; // Added useRouter
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import { useTranslation } from 'next-i18next';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
-import { Modal, Button, Typography } from 'antd'; // Space might be removed, PlusOutlined might be removed.
-// PlusOutlined is used by WhiteboardWrapper -> PeerChainVisualization. Keep for now.
+import { Modal, Button, Typography } from 'antd'; // Modal for confirm, Button for Modal footer.
+// PlusOutlined might be removable if not used by other components on this page.
 import { PlusOutlined } from '@ant-design/icons';
 import WhiteboardWrapper from '@/components/Blockchain/WhiteboardCanvas';
 import BlockchainPageLayout from '@/components/Layout/BlockchainPageLayout';
 import BlockDetailModal from '@/components/Blockchain/BlockDetailModal';
 import useSimpleChain from '@/hooks/useSimpleChain';
+import useBlockSelectionModal from '@/hooks/useBlockSelectionModal'; // Import the new hook
 import { BlockType } from '@/lib/blockchainUtils';
 
 // Define constants for initial chain setup - these will be passed to the hook
@@ -35,11 +31,17 @@ const BlockchainIndexPage: NextPage = () => {
     updateBlockData, // Renamed to handleDataChangeInModal below
     updateBlockNonce, // Renamed to handleNonceChangeInModal below
     mineBlock, // Renamed to handleMineInModal below
-    removeBlock, // Renamed to handleRemoveBlockWithModal below
+    removeBlock,
   } = useSimpleChain();
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedBlock, setSelectedBlock] = useState<BlockType | null>(null);
+  const {
+    isModalVisible,
+    selectedBlockForModal,
+    showModal,
+    closeModal
+  } = useBlockSelectionModal(chain); // Use the new hook, pass the chain from useSimpleChain
+
+  // Removed old useState for isModalVisible and selectedBlock
 
   useEffect(() => {
     const initialConfig = {
@@ -55,28 +57,18 @@ const BlockchainIndexPage: NextPage = () => {
 
   const handleDataChangeInModal = (blockId: string, newData: string) => {
     updateBlockData(blockId, newData);
-    // Update selectedBlock if it's the one being edited
-    if (selectedBlock && selectedBlock.id === blockId) {
-      const updatedBlock = chain.find(b => b.id === blockId);
-      if (updatedBlock) setSelectedBlock(updatedBlock); // This might not reflect immediately due to async nature of hook update
-    }
+    // No longer need to call setSelectedBlock here, hook's useEffect handles it.
   };
 
   const handleNonceChangeInModal = (blockId: string, newNonceValue: string | number | null | undefined) => {
     const newNonce = Number(newNonceValue ?? 0);
     updateBlockNonce(blockId, newNonce);
-    if (selectedBlock && selectedBlock.id === blockId) {
-      const updatedBlock = chain.find(b => b.id === blockId);
-      if (updatedBlock) setSelectedBlock(updatedBlock);
-    }
+    // No longer need to call setSelectedBlock here.
   };
 
   const handleMineInModal = async (blockId: string) => {
     await mineBlock(blockId);
-    if (selectedBlock && selectedBlock.id === blockId) {
-      const updatedBlock = chain.find(b => b.id === blockId);
-       if (updatedBlock) setSelectedBlock(updatedBlock);
-    }
+    // No longer need to call setSelectedBlock here.
   };
 
   const handleResetChainWithModal = () => {
@@ -110,21 +102,7 @@ const BlockchainIndexPage: NextPage = () => {
     });
   };
 
-  // showModal, handleOk, handleCancel remain the same for controlling modal visibility
-  const showModal = (block: BlockType) => {
-    setSelectedBlock(block);
-    setIsModalVisible(true);
-  };
-
-  const handleOk = () => {
-    setIsModalVisible(false);
-    setSelectedBlock(null);
-  };
-
-  const handleCancel = () => {
-    setIsModalVisible(false);
-    setSelectedBlock(null);
-  };
+  // Old showModal, handleOk, handleCancel are removed, replaced by showModal, closeModal from the hook.
 
   const currentMiningBlockId = useMemo(() => {
     return Object.entries(miningStates).find(([_id, isMining]) => isMining)?.[0] || null;
@@ -172,7 +150,7 @@ const BlockchainIndexPage: NextPage = () => {
             (blockIdToOpen && b.id === blockIdToOpen)
         );
         if (blockToOpen) {
-            showModal(blockToOpen);
+            showModal(blockToOpen); // Use showModal from useBlockSelectionModal hook
         } else {
             console.warn("Tutorial: Block not found for OPEN_BLOCK_MODAL", actionParams);
         }
@@ -181,7 +159,7 @@ const BlockchainIndexPage: NextPage = () => {
       case 'OPEN_BLOCK_MODAL_AND_FOCUS_DATA': {
         const blockToOpen = chain.find(b => actionParams?.blockNumber && b.blockNumber === actionParams.blockNumber);
         if (blockToOpen) {
-            showModal(blockToOpen);
+            showModal(blockToOpen); // Use showModal from useBlockSelectionModal hook
             setTimeout(() => {
                 const dataTextArea = document.querySelector('.ant-modal-body textarea[name="data"]') as HTMLTextAreaElement; // This selector might need update if BlockCard structure changes
                 if (dataTextArea && typeof dataTextArea.focus === 'function') {
@@ -195,15 +173,15 @@ const BlockchainIndexPage: NextPage = () => {
         break;
       }
       case 'CLICK_MINE_BUTTON': {
-        const blockIdToMine = selectedBlock?.id || (actionParams?.blockNumber && chain[actionParams.blockNumber-1])?.id;
-        if(selectedBlock && blockIdToMine === selectedBlock.id) { // If modal is open for the target block
+        const blockIdToMine = selectedBlockForModal?.id || (actionParams?.blockNumber && chain[actionParams.blockNumber-1])?.id;
+        if(selectedBlockForModal && blockIdToMine === selectedBlockForModal.id) { // If modal is open for the target block
             const mineButton = document.querySelector('.ant-modal-body button.ant-btn-primary[data-testid="mine-button-in-modal"]') as HTMLElement; // Check if testid is still there
             if (mineButton) mineButton.click();
             else console.warn("Tutorial: Mine button not found in modal for current block.");
         } else if (blockIdToMine) {
             const blockToOpenAndMine = chain.find(b => b.id === blockIdToMine);
             if (blockToOpenAndMine) {
-                showModal(blockToOpenAndMine);
+                showModal(blockToOpenAndMine); // Use showModal from useBlockSelectionModal hook
                 setTimeout(() => {
                     const mineButton = document.querySelector('.ant-modal-body button.ant-btn-primary[data-testid="mine-button-in-modal"]') as HTMLElement;
                     if (mineButton) mineButton.click();
