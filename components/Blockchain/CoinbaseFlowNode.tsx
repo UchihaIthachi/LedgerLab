@@ -7,7 +7,7 @@ import { useTranslation } from 'next-i18next';
 // For this component, we'll assume BlockType from blockchainUtils includes coinbase and transactions array
 import { BlockType as GenericBlockType, CoinbaseTransactionType, TransactionType } from '@/lib/blockchainUtils';
 
-const { Text, Title } = Typography;
+// const { Text, Title } = Typography; // Remove destructuring
 
 // Define a more specific type for the data prop based on GenericBlockType
 // This helps ensure the component receives what it expects.
@@ -60,9 +60,9 @@ const CoinbaseFlowNode: React.FC<CoinbaseFlowNodeProps> = ({ data }) => {
         title={
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
             <Tooltip title={t('TooltipBlockNumber', 'This is the unique identifier for the block in the chain.')}>
-              <Title level={5} style={{ margin: 0, fontSize: '14px' }}>
+              <Typography.Title level={5} style={{ margin: 0, fontSize: '14px' }}>
                 {t('Block', 'Block')} #{data.blockNumber}
-              </Title>
+              </Typography.Title>
             </Tooltip>
             <Tooltip title={data.isValid ? t('TooltipValidBlock', 'This block is valid.') : t('TooltipInvalidBlock', 'This block is invalid.')}>
               {data.isValid ? (
@@ -76,21 +76,21 @@ const CoinbaseFlowNode: React.FC<CoinbaseFlowNodeProps> = ({ data }) => {
       >
         <div> {/* Content wrapper for hashes */}
           <Tooltip title={data.currentHash} placement="topLeft">
-            <Text style={{ fontSize: '11px', wordBreak: 'break-all', display: 'block', marginBottom: '4px' }} strong>
+            <Typography.Text style={{ fontSize: '11px', wordBreak: 'break-all', display: 'block', marginBottom: '4px' }} strong>
               <Tooltip title={t('TooltipHash', 'A cryptographic hash uniquely representing this block\'s content and header.')} placement="bottomLeft">
                 {t('HashAbbreviation', 'Hash')}:
               </Tooltip>
               {' '}{abbreviatedHash(data.currentHash)}
-            </Text>
+            </Typography.Text>
           </Tooltip>
           {data.previousHash && (
              <Tooltip title={data.previousHash} placement="topLeft">
-                <Text style={{ fontSize: '10px', wordBreak: 'break-all', display: 'block', marginBottom: '8px' }}>
+                <Typography.Text style={{ fontSize: '10px', wordBreak: 'break-all', display: 'block', marginBottom: '8px' }}>
                   <Tooltip title={t('TooltipPreviousHash', 'The hash of the preceding block, linking this block to the chain.')} placement="bottomLeft">
                     {t('PreviousHashAbbreviation', 'Prev. Hash')}:
                   </Tooltip>
                  {' '}{abbreviatedHash(data.previousHash)}
-                </Text>
+                </Typography.Text>
             </Tooltip>
           )}
         </div>

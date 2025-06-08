@@ -4,7 +4,7 @@ import { CheckCircleTwoTone, CloseCircleTwoTone, CloseOutlined } from '@ant-desi
 import { useTranslation } from 'next-i18next';
 import { Handle, Position } from 'reactflow'; // Important for connectors
 
-const { Text, Title } = Typography;
+// const { Text, Title } = Typography; // Remove destructuring
 
 export interface FlowNodeBlockData {
   id: string;
@@ -54,9 +54,9 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
           <Tooltip title={t('TooltipBlockNumber', 'This is the unique identifier for the block in the chain.')}>
-            <Title level={5} style={{ margin: 0, fontSize: '14px' }}>
+            <Typography.Title level={5} style={{ margin: 0, fontSize: '14px' }}>
               {t('Block', 'Block')} #{data.blockNumber}
-            </Title>
+            </Typography.Title>
           </Tooltip>
           <Tooltip title={data.isValid ? t('TooltipValidBlock', 'This block is valid.') : t('TooltipInvalidBlock', 'This block is invalid (e.g., tampered data or incorrect nonce).')}>
             {data.isValid ? (
@@ -67,31 +67,31 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
           </Tooltip>
         </div>
         <Tooltip title={data.currentHash} placement="topLeft">
-          <Text style={{ fontSize: '11px', wordBreak: 'break-all' }} strong>
+          <Typography.Text style={{ fontSize: '11px', wordBreak: 'break-all' }} strong>
             <Tooltip title={t('TooltipHash', 'A cryptographic hash uniquely representing this block\'s content and header.')} placement="bottomLeft">
               {t('HashAbbreviation', 'Hash')}:
             </Tooltip>
             {' '}{abbreviatedHash(data.currentHash)}
-          </Text>
+          </Typography.Text>
         </Tooltip>
         {data.previousHash && (
           <Tooltip title={data.previousHash} placement="topLeft">
-            <Text style={{ fontSize: '10px', wordBreak: 'break-all', marginTop: '4px' }}>
+            <Typography.Text style={{ fontSize: '10px', wordBreak: 'break-all', marginTop: '4px' }}>
               <Tooltip title={t('TooltipPreviousHash', 'The hash of the preceding block, linking this block to the chain.')} placement="bottomLeft">
                 {t('PreviousHashAbbreviation', 'Prev. Hash')}:
               </Tooltip>
               {' '}{abbreviatedHash(data.previousHash)}
-            </Text>
+            </Typography.Text>
           </Tooltip>
         )}
         <Tooltip title={data.data} placement="bottom">
-          <Text style={{ fontSize: '10px', marginTop: '4px', fontStyle: 'italic', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <Typography.Text style={{ fontSize: '10px', marginTop: '4px', fontStyle: 'italic', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {t('DataAbbreviation', 'Data')}: {data.data}
-          </Text>
+          </Typography.Text>
         </Tooltip>
-        <Text style={{ fontSize: '10px', marginTop: 'auto', paddingTop: '4px', color: '#888' }}>
+        <Typography.Text style={{ fontSize: '10px', marginTop: 'auto', paddingTop: '4px', color: '#888' }}>
           {t('NonceAbbreviation', 'Nonce')}: {data.nonce}
-        </Text>
+        </Typography.Text>
         {!data.isGenesis && (
           <Button
             icon={<CloseOutlined />}

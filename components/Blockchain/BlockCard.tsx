@@ -3,7 +3,7 @@ import { Card, Form, Input, Button, InputNumber, Descriptions, Typography, Divid
 import { useTranslation } from 'next-i18next';
 import { TransactionType, CoinbaseTransactionType } from '@/lib/blockchainUtils'; // Import types
 
-const { Text } = Typography;
+// const { Text } = Typography; // Remove this line
 
 interface BlockCardProps {
   blockNumber: number;
@@ -93,7 +93,7 @@ const BlockCard: React.FC<BlockCardProps> = ({
     if (dataType === 'transactions' && Array.isArray(data)) {
       return (
         <Form.Item label={t('P2PTransactions', 'P2P Transactions')}>
-          {data.length === 0 ? <Text italic>{t('NoTransactions', '(No transactions)')}</Text> : null}
+          {data.length === 0 ? <Typography.Text italic>{t('NoTransactions', '(No transactions)')}</Typography.Text> : null}
           {data.map((tx, index) => (
             <Card key={tx.id || index} size="small" style={{ marginTop: index > 0 ? '10px' : '0' }} type="inner">
               <Descriptions bordered column={1} size="small">
