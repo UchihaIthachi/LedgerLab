@@ -71,7 +71,9 @@ const BlockCard: React.FC<BlockCardProps> = ({
           <Card size="small" type="inner">
             <Descriptions bordered column={1} size="small">
               <Descriptions.Item label={t('To', 'To')}>{coinbase.to}</Descriptions.Item>
-              <Descriptions.Item label={t('Value', 'Value (Minted)')}>{coinbase.value.toString()}</Descriptions.Item>
+              <Descriptions.Item label={t('Value', 'Value (Minted)')}>
+                {(coinbase.value ?? '0').toString()}
+              </Descriptions.Item>
             </Descriptions>
             {/* Example for editable coinbase, parent would handle state & callback */}
             {/* {onCoinbaseFieldChange && (

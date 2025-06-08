@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { NextPage } from "next";
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/router'; // Added useRouter
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useTranslation } from "next-i18next";
 import Head from "next/head";
@@ -32,7 +32,7 @@ import ReactFlow, {
   useEdgesState,
   addEdge,
   Connection,
-  useReactFlow, // Import for fitView hook
+  useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import CoinbaseFlowNode, { CoinbaseFlowNodeData } from '@/components/Blockchain/CoinbaseFlowNode';
@@ -50,16 +50,15 @@ import {
 
 const { Title } = Typography;
 
-const initialChainLength = 3;
+const initialChainLength = 3; // Used for initial setup and reset
 const peerIds = ["Peer A", "Peer B", "Peer C"];
-const PRECALCULATED_NONCES = [6359, 19780, 10510, 13711, 36781]; // Used for reset chain
+const PRECALCULATED_NONCES = [6359, 19780, 10510]; // Define for this page, matching initialChainLength
 
 interface Peer {
   peerId: string;
   chain: BlockType[];
 }
 
-// Props for PeerBlockchainFlow (remains the same)
 interface PeerBlockchainFlowProps {
   peer: Peer;
   miningStates: { [key: string]: boolean };
@@ -70,21 +69,19 @@ interface PeerBlockchainFlowProps {
   onResetThisPeerChain: () => void;
 }
 
-// Define the Inner Component that has access to React Flow context
-// It now directly receives all props that PeerBlockchainFlow used to, including nodeTypes/edgeTypes
 const InnerFlowCanvasAndControls: React.FC<PeerBlockchainFlowProps> = ({
   peer,
   miningStates: globalMiningStates,
   onShowBlockModal,
-  nodeTypes: passedNodeTypes, // Receive from PeerBlockchainFlow
-  edgeTypes: passedEdgeTypes, // Receive from PeerBlockchainFlow
+  nodeTypes: passedNodeTypes,
+  edgeTypes: passedEdgeTypes,
   onAddBlockToThisPeer,
   onResetThisPeerChain,
 }) => {
   const { peerId, chain: peerChain } = peer;
   const [nodes, setNodes, onNodesChange] = useNodesState<CoinbaseFlowNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdgeData>([]);
-  const { fitView } = useReactFlow(); // Correctly called within a child of ReactFlowProvider
+  const { fitView } = useReactFlow();
   const { t } = useTranslation('common');
 
   useEffect(() => {
@@ -131,7 +128,7 @@ const InnerFlowCanvasAndControls: React.FC<PeerBlockchainFlowProps> = ({
   const handleFitView = useCallback(() => fitView({ padding: 0.1, duration: 200 }), [fitView]);
 
   return (
-    <> {/* Fragment to group ReactFlow and its sibling controls */}
+    <>
       <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, display: 'flex', gap: '8px' }}>
         <Button size="small" icon={<PlusOutlined />} onClick={onAddBlockToThisPeer} title={t('AddBlockToThisPeerChain', 'Add Block to this Chain')} />
         <Button size="small" icon={<ReloadOutlined />} onClick={onResetThisPeerChain} title={t('ResetThisPeerChain', 'Reset this Chain')} />
@@ -143,8 +140,8 @@ const InnerFlowCanvasAndControls: React.FC<PeerBlockchainFlowProps> = ({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnectInternal}
-        nodeTypes={passedNodeTypes} // Use props for nodeTypes
-        edgeTypes={passedEdgeTypes} // Use props for edgeTypes
+        nodeTypes={passedNodeTypes}
+        edgeTypes={passedEdgeTypes}
         fitView
         fitViewOptions={{ padding: 0.2 }}
       >
@@ -167,12 +164,10 @@ const InnerFlowCanvasAndControls: React.FC<PeerBlockchainFlowProps> = ({
     </>
   );
 };
-InnerFlowCanvasAndControls.displayName = 'InnerFlowCanvasAndControls';
+InnerFlowCanvasAndControls.displayName = "InnerFlowCanvasAndControls";
 
-// Updated PeerBlockchainFlow component
 const PeerBlockchainFlow: React.FC<PeerBlockchainFlowProps> = React.memo((props) => {
   return (
-    // Added data-peer-id for tutorial targeting
     <div data-peer-id={props.peer.peerId} style={{ width: '100%', height: '350px', marginBottom: '20px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#f9f9f9', position: 'relative' }}>
       <ReactFlowProvider>
         <InnerFlowCanvasAndControls {...props} />
@@ -181,7 +176,6 @@ const PeerBlockchainFlow: React.FC<PeerBlockchainFlowProps> = React.memo((props)
   );
 });
 PeerBlockchainFlow.displayName = 'PeerBlockchainFlow';
-
 
 const getInitialCoinbase = (blockNum: number, peerInitial: string): CoinbaseTransactionType => ({
   to: `Miner-${peerInitial}`,
@@ -228,7 +222,8 @@ const CoinbasePage: NextPage = () => {
       .catch(err => { console.error("Failed to fetch coinbase_theory.md", err); setTheoryError(err.message); })
       .finally(() => setTheoryIsLoading(false));
 
-    fetch('/data/tutorials/coinbase_tutorial_en.json').then(res => res.json())
+    fetch('/data/tutorials/coinbase_tutorial_en.json')
+      .then(res => res.json())
       .then(data => setAllTutorialData(data))
       .catch(error => console.error("Could not fetch coinbase tutorial data:", error));
 
@@ -365,16 +360,42 @@ const CoinbasePage: NextPage = () => {
     setPeers(prevPeers => prevPeers.map(p => {
       if (p.peerId === peerId) {
         let blockIndex = -1;
-        const updatedChain = p.chain.map((b, index) => {
+        const chainWithTempUpdate = p.chain.map((b, index) => {
           if (b.id === currentBlock.id) {
             blockIndex = index;
-            const currentCoinbase = b.coinbase || { to: '', value: 0 };
-            return { ...b, coinbase: { ...currentCoinbase, [field]: value } };
+            // Ensure b.coinbase exists and has a default structure.
+            const existingCoinbase = b.coinbase || { to: `Miner-${p.peerId.replace('Peer ','')}`, value: 0 };
+
+            let newFieldValue = value;
+            // The onChange for InputNumber already defaults null to 0, so 'value' here should be defined.
+            // This check is an additional safeguard if 'value' could somehow become undefined/null.
+            if (field === 'value' && (newFieldValue === null || newFieldValue === undefined)) {
+              newFieldValue = 0;
+            }
+
+            return {
+              ...b,
+              coinbase: {
+                ...existingCoinbase,
+                [field]: newFieldValue
+              }
+            };
           }
           return b;
         });
-        if (blockIndex === -1) return p;
-        return { ...p, chain: updateCoinbaseChainCascading(updatedChain, blockIndex) };
+
+        if (blockIndex === -1) return p; // Should not happen
+
+        const fullyUpdatedChain = updateCoinbaseChainCascading(chainWithTempUpdate, blockIndex);
+
+        // Update selectedBlockInfo immediately if the currently selected block was updated
+        if (selectedBlockInfo && selectedBlockInfo.block.id === currentBlock.id && fullyUpdatedChain[blockIndex]) {
+            setSelectedBlockInfo(prevInfo => prevInfo ? {
+                ...prevInfo,
+                block: fullyUpdatedChain[blockIndex]
+            } : null);
+        }
+        return { ...p, chain: fullyUpdatedChain };
       }
       return p;
     }));
