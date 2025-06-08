@@ -538,7 +538,7 @@ const CoinbasePage: NextPage = () => {
               blockNumber={selectedBlockInfo.block.blockNumber}
               nonce={selectedBlockInfo.block.nonce}
               coinbase={selectedBlockInfo.block.coinbase}
-              data={selectedBlockInfo.block.data}
+              data={Array.isArray(selectedBlockInfo.block.data) ? selectedBlockInfo.block.data : []}
               dataType="transactions"
               previousHash={selectedBlockInfo.block.previousHash}
               currentHash={selectedBlockInfo.block.currentHash}
