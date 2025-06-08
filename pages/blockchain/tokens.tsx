@@ -3,75 +3,46 @@ import { NextPage } from "next";
 import { useRouter } from 'next/router';
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useTranslation } from "next-i18next";
-import Head from "next/head";
+// Removed Head, Tabs, Space, Input, InputNumber, Card, QuestionCircleOutlined, MarkdownRenderer, TutorialDisplay, TutorialStep, BlockCard
+// Also removing internal flow components like CoinbaseFlowNode, CustomEdge, and ReactFlow specific imports
 import {
   Row,
   Col,
   Typography,
-  Space,
-  Input,
   Button as AntButton,
-  InputNumber,
-  Card,
-  Modal,
-  Tabs,
+  Modal, // Still used for Modal.confirm
   Button,
 } from "antd";
-import { QuestionCircleOutlined, PlusOutlined, ReloadOutlined, ExpandAltOutlined } from '@ant-design/icons';
-import MarkdownRenderer from '@/components/Common/MarkdownRenderer';
-import TutorialDisplay from '@/components/Tutorial/TutorialDisplay';
-import { TutorialStep } from '@/types/tutorial';
-import BlockCard from "@/components/Blockchain/BlockCard";
-// ReactFlow specific imports might be removable
-// import ReactFlow, {
-//   ReactFlowProvider,
-//   Controls,
-//   Background,
-//   Node,
-//   Edge,
-//   useNodesState,
-//   useEdgesState,
-//   addEdge,
-//   Connection,
-//   useReactFlow,
-// } from 'reactflow';
-import 'reactflow/dist/style.css'; // Keep for global styles
-// CoinbaseFlowNode and CustomEdge imports might be removable
-// import CoinbaseFlowNode, { CoinbaseFlowNodeData } from '@/components/Blockchain/CoinbaseFlowNode'; // Reusing CoinbaseFlowNode
-// import CustomEdge, { CustomEdgeData } from '@/components/Blockchain/CustomEdge';
-import PeerChainVisualization from '@/components/Blockchain/PeerChainVisualization'; // Import the new component
-import BlockDetailModal from '@/components/Blockchain/BlockDetailModal'; // Import the new modal
-import BlockchainPageLayout from '@/components/Layout/BlockchainPageLayout'; // Import the layout
+// Removed icons that are now internal to sub-components or layout
+import 'reactflow/dist/style.css'; // Keep global styles for ReactFlow
+
+import PeerChainVisualization from '@/components/Blockchain/PeerChainVisualization';
+import BlockDetailModal from '@/components/Blockchain/BlockDetailModal';
+import BlockchainPageLayout from '@/components/Layout/BlockchainPageLayout';
 import {
   BlockType,
   TransactionType,
-  CoinbaseTransactionType,
+  CoinbaseTransactionType, // Keep for function signature consistency if getInitialCoinbaseForTokens is used by createInitialBlock
   MAX_NONCE,
   calculateHash,
   checkValidity,
   createInitialBlock,
   updateChainCascading,
 } from "@/lib/blockchainUtils";
+// TutorialStep might not be needed if executeTokensActionLogic doesn't use it for params.
+// import { TutorialStep } from '@/types/tutorial';
 
-const { Title } = Typography;
 
 const initialChainLengthTokens = 3;
 const peerIdsTokens = ['Peer X', 'Peer Y', 'Peer Z'];
-const PRECALCULATED_NONCES_TOKENS = [1010, 2020, 3030, 4040, 5050]; // Ensure enough for initialChainLengthTokens
+const PRECALCULATED_NONCES_TOKENS = [1010, 2020, 3030, 4040, 5050];
 
 interface Peer {
   peerId: string;
   chain: BlockType[];
 }
 
-// Removed TokenPeerFlowProps, InnerTokenFlowCanvasAndControls, and PeerBlockchainFlow
-// as they are now replaced by PeerChainVisualization.
-
-
 const getInitialCoinbaseForTokens = (blockNum: number, peerInitial: string): CoinbaseTransactionType | undefined => {
-  // Blocks on the /tokens page primarily focus on P2P transactions.
-  // No new currency is typically minted with each block in such a context,
-  // unlike the coinbase page which demonstrates minting.
   return undefined;
 };
 
@@ -94,27 +65,14 @@ const TokensPage: NextPage = () => {
   const [peers, setPeers] = useState<Peer[]>([]);
   const [miningStates, setMiningStates] = useState<{ [key: string]: boolean }>({});
   const [editingTxState, setEditingTxState] = useState<{ [txId: string]: Partial<TransactionType> }>({});
-  // const [editingCoinbaseState, setEditingCoinbaseState] = useState<{ [blockId: string]: Partial<CoinbaseTransactionType> }>({}); // Removed
 
   interface SelectedBlockInfo { peerId: string; block: BlockType; }
   const [selectedBlockInfo, setSelectedBlockInfo] = useState<SelectedBlockInfo | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const [activeTabKey, setActiveTabKey] = useState<string>("1");
-  const [theoryContent, setTheoryContent] = useState<string>('');
-  const [theoryIsLoading, setTheoryIsLoading] = useState<boolean>(true);
-  const [theoryError, setTheoryError] = useState<string | null>(null);
+  // Removed state: activeTabKey, theoryContent, theoryIsLoading, theoryError,
+  // isTutorialVisible, tutorialSteps, currentTutorialKey, allTutorialData
 
-  const [isTutorialVisible, setIsTutorialVisible] = useState(false);
-  const [tutorialSteps, setTutorialSteps] = useState<TutorialStep[]>([]);
-  const [currentTutorialKey, setCurrentTutorialKey] = useState<string | null>(null);
-  const [allTutorialData, setAllTutorialData] = useState<any | null>(null); // Handled by layout
-
-  // nodeTypes and edgeTypes are likely no longer needed here
-  // const nodeTypes = useMemo(() => ({ tokenBlock: CoinbaseFlowNode }), []);
-  // const edgeTypes = useMemo(() => ({ customEdge: CustomEdge }), []);
-
-  // Extracted logic for applying P2P transaction changes for the Tokens page
   const handleApplyP2PTxChangesTokens = useCallback((txId: string) => {
     if (!selectedBlockInfo) return;
     const changes = editingTxState[txId];
@@ -140,21 +98,10 @@ const TokensPage: NextPage = () => {
         return p;
       }));
     }
-  }, [selectedBlockInfo, editingTxState, setPeers, setEditingTxState]);
+  }, [selectedBlockInfo, editingTxState]);
 
   useEffect(() => {
-    setTheoryIsLoading(true);
-    setTheoryError(null);
-    fetch('/docs/tokens_theory.md').then(res => res.text())
-      .then(text => setTheoryContent(text))
-      .catch(err => { console.error("Failed to fetch tokens_theory.md", err); setTheoryError(err.message); })
-      .finally(() => setTheoryIsLoading(false));
-
-    fetch('/data/tutorials/tokens_tutorial_en.json')
-      .then(res => res.json())
-      .then(data => setAllTutorialData(data))
-      .catch(error => console.error("Could not fetch tokens_tutorial_en.json:", error));
-
+    // Initial peer chain setup remains.
     const newPeersData: Peer[] = peerIdsTokens.map(id => {
       const peerInitial = id.replace('Peer ', '');
       const newChain: BlockType[] = [];
@@ -181,22 +128,26 @@ const TokensPage: NextPage = () => {
         const updatedBlockInChain = peer.chain.find(b => b.id === currentSelectedBlock.id);
         if (updatedBlockInChain && JSON.stringify(updatedBlockInChain) !== JSON.stringify(currentSelectedBlock)) {
           setSelectedBlockInfo({ peerId, block: updatedBlockInChain });
+        } else if (!updatedBlockInChain) {
+          handleModalClose();
         }
+      } else {
+         handleModalClose();
       }
     }
-  }, [peers, selectedBlockInfo]);
+  }, [peers, selectedBlockInfo]); // Added handleModalClose for robustness, ensure it's memoized
 
   const showBlockModal = useCallback((peerId: string, block: BlockType) => {
     setSelectedBlockInfo({ peerId, block });
     setIsModalVisible(true);
   }, []);
 
-  const handleModalClose = () => {
+  const handleModalClose = useCallback(() => {
     setIsModalVisible(false);
     setSelectedBlockInfo(null);
-  };
+  }, []);
 
-  const handleNonceChangeInModal = (newNonceValue: string | number | null | undefined) => {
+  const handleNonceChangeInModal = useCallback((newNonceValue: string | number | null | undefined) => {
     if (!selectedBlockInfo) return;
     const { peerId, block: currentBlock } = selectedBlockInfo;
     const newNonce = Number(newNonceValue ?? 0);
@@ -212,9 +163,9 @@ const TokensPage: NextPage = () => {
       }
       return p;
     }));
-  };
+  }, [selectedBlockInfo]);
 
-  const handleMineInModal = async () => {
+  const handleMineInModal = useCallback(async () => {
     if (!selectedBlockInfo) return;
     const { peerId, block: blockToMine } = selectedBlockInfo;
     const miningKey = `${peerId}-${blockToMine.id}`;
@@ -244,9 +195,9 @@ const TokensPage: NextPage = () => {
       return p;
     }));
     setMiningStates(prev => ({ ...prev, [miningKey]: false }));
-  };
+  }, [selectedBlockInfo]);
 
-  const handleP2PTransactionChangeInModal = (txInternalId: string, fieldToChange: keyof TransactionType, newValue: any) => {
+  const handleP2PTransactionChangeInModal = useCallback((txInternalId: string, fieldToChange: keyof TransactionType, newValue: any) => {
     if (!selectedBlockInfo) return;
     const { peerId, block: currentBlock } = selectedBlockInfo;
     setPeers(prevPeers => prevPeers.map(p => {
@@ -268,12 +219,9 @@ const TokensPage: NextPage = () => {
         }
         return p;
     }));
-  };
+  }, [selectedBlockInfo]);
 
-  // Removed handleCoinbaseInputChangeInModal as coinbase editing UI is removed for /tokens page.
-  // P2P transaction changes are handled by handleP2PTransactionChangeInModal.
-
-  const addBlockToPeerChain = (pId: string) => {
+  const addBlockToPeerChain = useCallback((pId: string) => {
     setPeers(currentPeers => currentPeers.map(p => {
       if (p.peerId === pId) {
         const lastBlock = p.chain.length > 0 ? p.chain[p.chain.length - 1] : null;
@@ -291,48 +239,43 @@ const TokensPage: NextPage = () => {
       }
       return p;
     }));
-  };
+  }, []);
 
-  const handleResetPeerChain = (pId: string) => {
-    setPeers(currentPeers => currentPeers.map(p => {
-      if (p.peerId === pId) {
-        const peerInitial = p.peerId.replace('Peer ', '');
-        const newInitialChain: BlockType[] = [];
-        let previousHash = "0".repeat(64);
-        for (let i = 0; i < initialChainLengthTokens; i++) {
-          const blockNumber = i + 1;
-          const coinbaseTx = getInitialCoinbaseForTokens(blockNumber, peerInitial);
-          const p2pTxs = getInitialP2PTransactionsForTokens(blockNumber, peerInitial);
-          const nonce = PRECALCULATED_NONCES_TOKENS[i] !== undefined ? PRECALCULATED_NONCES_TOKENS[i] : undefined;
-          const block = createInitialBlock(blockNumber, p2pTxs, previousHash, nonce, coinbaseTx);
-          newInitialChain.push(block);
-          previousHash = block.currentHash;
-        }
-        const blockIdsToReset = p.chain.map(b => `${pId}-${b.id}`);
-        setMiningStates(prevStates => {
-            const newStates = {...prevStates};
-            blockIdsToReset.forEach(id => delete newStates[id]);
-            return newStates;
-        });
-        return { ...p, chain: newInitialChain };
+  const handleResetPeerChain = useCallback((pId: string) => {
+    Modal.confirm({
+      title: t('ConfirmResetChainTitle', 'Are you sure you want to reset this peer\'s chain?'),
+      content: t('ConfirmResetChainContent', 'This will restore the chain to its initial state.'),
+      okText: t('Reset', 'Reset'),
+      okType: 'danger',
+      cancelText: t('Cancel', 'Cancel'),
+      onOk: () => {
+        setPeers(currentPeers => currentPeers.map(p => {
+          if (p.peerId === pId) {
+            const peerInitial = p.peerId.replace('Peer ', '');
+            const newInitialChain: BlockType[] = [];
+            let previousHash = "0".repeat(64);
+            for (let i = 0; i < initialChainLengthTokens; i++) {
+              const blockNumber = i + 1;
+              const coinbaseTx = getInitialCoinbaseForTokens(blockNumber, peerInitial);
+              const p2pTxs = getInitialP2PTransactionsForTokens(blockNumber, peerInitial);
+              const nonce = PRECALCULATED_NONCES_TOKENS[i] !== undefined ? PRECALCULATED_NONCES_TOKENS[i] : undefined;
+              const block = createInitialBlock(blockNumber, p2pTxs, previousHash, nonce, coinbaseTx);
+              newInitialChain.push(block);
+              previousHash = block.currentHash;
+            }
+            const blockIdsToReset = p.chain.map(b => `${pId}-${b.id}`);
+            setMiningStates(prevStates => {
+                const newStates = {...prevStates};
+                blockIdsToReset.forEach(id => delete newStates[id]);
+                return newStates;
+            });
+            return { ...p, chain: newInitialChain };
+          }
+          return p;
+        }));
       }
-      return p;
-    }));
-  };
-
-  const startTutorial = (tutorialKey: string) => {
-    if (allTutorialData && allTutorialData[tutorialKey]) {
-      const selectedTutorial = allTutorialData[tutorialKey];
-      const flattenedSteps: TutorialStep[] = selectedTutorial.sections.reduce(
-        (acc: TutorialStep[], section: any) => acc.concat(section.steps), []
-      );
-      setTutorialSteps(flattenedSteps);
-      setCurrentTutorialKey(tutorialKey);
-      setIsTutorialVisible(true);
-    } else {
-      console.warn(`Tutorial with key "${tutorialKey}" not found or data not loaded yet.`);
-    }
-  };
+    });
+  }, [t]);
 
   const executeTokensActionLogic = (actionType: string, actionParams?: any) => {
     switch (actionType) {
@@ -353,7 +296,7 @@ const TokensPage: NextPage = () => {
         break;
       }
       case 'OPEN_BLOCK_MODAL': {
-        const { peerId, blockOrderInPeerChain } = actionParams; // blockOrderInPeerChain from plan
+        const { peerId, blockOrderInPeerChain } = actionParams;
         const targetPeer = peers.find(p => p.peerId === peerId);
         if (targetPeer && targetPeer.chain.length > blockOrderInPeerChain) {
           const blockToView = targetPeer.chain[blockOrderInPeerChain];
@@ -361,7 +304,7 @@ const TokensPage: NextPage = () => {
         } else { console.warn("Peer or block not found for OPEN_BLOCK_MODAL", actionParams); }
         break;
       }
-      case 'OPEN_MODAL_AND_FOCUS_P2P_TX_WHITEBOARD': { // Matching JSON
+      case 'OPEN_MODAL_AND_FOCUS_P2P_TX_WHITEBOARD': {
         const { peerId, blockOrderInPeerChain, p2pTxIndex, fieldToFocus } = actionParams;
         const targetPeer = peers.find(p => p.peerId === peerId);
         if (targetPeer && targetPeer.chain.length > blockOrderInPeerChain) {
@@ -382,7 +325,7 @@ const TokensPage: NextPage = () => {
         } else { console.warn("Peer or block not found for OPEN_MODAL_AND_FOCUS_P2P_TX_WHITEBOARD", actionParams); }
         break;
       }
-      case 'OPEN_MODAL_AND_CLICK_MINE_WHITEBOARD': { // Matching JSON
+      case 'OPEN_MODAL_AND_CLICK_MINE_WHITEBOARD': {
         const { peerId, blockOrderInPeerChain } = actionParams;
         const targetPeer = peers.find(p => p.peerId === peerId);
         if (targetPeer && targetPeer.chain.length > blockOrderInPeerChain) {
@@ -409,17 +352,6 @@ const TokensPage: NextPage = () => {
 
   const handleExecuteTutorialAction = (actionType: string, actionParams?: any) => {
     console.log('Tokens Tutorial Action:', actionType, actionParams);
-    const demoInteractionActions = [
-        'HIGHLIGHT_ELEMENT',
-        'OPEN_BLOCK_MODAL',
-        'OPEN_MODAL_AND_FOCUS_P2P_TX_WHITEBOARD',
-        'OPEN_MODAL_AND_CLICK_MINE_WHITEBOARD'
-    ];
-    if (demoInteractionActions.includes(actionType) && activeTabKey !== "1") {
-      setActiveTabKey("1");
-      setTimeout(() => executeTokensActionLogic(actionType, actionParams), 100);
-      return;
-    }
     executeTokensActionLogic(actionType, actionParams);
   };
 
@@ -433,9 +365,9 @@ const TokensPage: NextPage = () => {
       <Row gutter={[16, 24]}>
         {peers.map((peer) => (
           <Col key={peer.peerId} span={24} className="block-card-wrapper">
-            <Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
+            <Typography.Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
               {t(peer.peerId, peer.peerId)}
-            </Title>
+            </Typography.Title>
             <PeerChainVisualization
               peerId={peer.peerId}
               chain={peer.chain}
@@ -456,10 +388,10 @@ const TokensPage: NextPage = () => {
           miningState={miningStates[`${selectedBlockInfo.peerId}-${selectedBlockInfo.block.id}`] || false}
           onMine={handleMineInModal}
           onNonceChange={handleNonceChangeInModal}
-          blockDataType="transactions_only" // Coinbase editing is not applicable here
+          blockDataType="transactions_only"
           onP2PTransactionChange={handleP2PTransactionChangeInModal}
           editingTxState={editingTxState}
-          onApplyP2PTxChanges={handleApplyP2PTxChangesTokens} // Pass extracted function
+          onApplyP2PTxChanges={handleApplyP2PTxChangesTokens}
         />
       )}
     </BlockchainPageLayout>

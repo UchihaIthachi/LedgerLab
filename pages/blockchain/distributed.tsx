@@ -3,43 +3,22 @@ import { NextPage } from "next";
 import { useRouter } from 'next/router';
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useTranslation } from "next-i18next";
-import Head from "next/head";
+// Removed Head, Tabs, Space, Input, QuestionCircleOutlined, MarkdownRenderer, TutorialDisplay, TutorialStep, BlockCard
+// Also removing internal flow components like FlowNodeBlock, CustomEdge, and ReactFlow specific imports
 import {
   Row,
   Col,
   Typography,
-  Space,
-  Input,
   Button as AntButton,
-  Modal,
-  Tabs,
+  Modal, // Still used for Modal.confirm
   Button,
 } from "antd";
-import { QuestionCircleOutlined, PlusOutlined, ReloadOutlined, ExpandAltOutlined } from '@ant-design/icons';
-import MarkdownRenderer from '@/components/Common/MarkdownRenderer';
-import TutorialDisplay from '@/components/Tutorial/TutorialDisplay';
-import { TutorialStep } from '@/types/tutorial';
-import BlockCard from "@/components/Blockchain/BlockCard";
-// ReactFlow specific imports might be removable
-// import ReactFlow, {
-//   ReactFlowProvider,
-//   Controls,
-//   Background,
-//   Node,
-//   Edge,
-//   useNodesState,
-//   useEdgesState,
-//   addEdge,
-//   Connection,
-//   useReactFlow,
-// } from 'reactflow';
-import 'reactflow/dist/style.css'; // Keep for global styles
-// FlowNodeBlock and CustomEdge imports might be removable
-// import FlowNodeBlock, { FlowNodeBlockData } from '@/components/Blockchain/FlowNodeBlock';
-// import CustomEdge, { CustomEdgeData } from '@/components/Blockchain/CustomEdge';
-import PeerChainVisualization from '@/components/Blockchain/PeerChainVisualization'; // Import the new component
-import BlockDetailModal from '@/components/Blockchain/BlockDetailModal'; // Import the new modal
-import BlockchainPageLayout from '@/components/Layout/BlockchainPageLayout'; // Import the layout
+// Removed icons that are now internal to sub-components or layout
+import 'reactflow/dist/style.css'; // Keep global styles for ReactFlow
+
+import PeerChainVisualization from '@/components/Blockchain/PeerChainVisualization';
+import BlockDetailModal from '@/components/Blockchain/BlockDetailModal';
+import BlockchainPageLayout from '@/components/Layout/BlockchainPageLayout';
 import {
   BlockType,
   MAX_NONCE,
@@ -48,8 +27,8 @@ import {
   createInitialBlock,
   updateChainCascading,
 } from "@/lib/blockchainUtils";
-
-const { Title } = Typography;
+// TutorialStep might not be needed if executeDistributedActionLogic doesn't use it for params.
+// import { TutorialStep } from '@/types/tutorial';
 
 const initialChainLength = 5;
 const peerIds = ['Peer A', 'Peer B', 'Peer C'];
@@ -59,9 +38,6 @@ interface Peer {
   peerId: string;
   chain: BlockType[];
 }
-
-// Removed DistributedPeerFlowProps, InnerDistributedFlowCanvasAndControls, and DistributedPeerFlow
-// as they are now replaced by PeerChainVisualization.
 
 const DistributedPage: NextPage = () => {
   const { t } = useTranslation('common');
@@ -73,33 +49,11 @@ const DistributedPage: NextPage = () => {
   const [selectedBlockInfo, setSelectedBlockInfo] = useState<SelectedBlockInfo | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const [activeTabKey, setActiveTabKey] = useState<string>("1");
-  const [theoryContent, setTheoryContent] = useState<string>('');
-  const [theoryIsLoading, setTheoryIsLoading] = useState<boolean>(true);
-  const [theoryError, setTheoryError] = useState<string | null>(null);
-
-  const [isTutorialVisible, setIsTutorialVisible] = useState(false);
-  const [tutorialSteps, setTutorialSteps] = useState<TutorialStep[]>([]);
-  const [currentTutorialKey, setCurrentTutorialKey] = useState<string | null>(null);
-  const [allTutorialData, setAllTutorialData] = useState<any | null>(null); // Handled by layout
-
-  // nodeTypes and edgeTypes are likely no longer needed here
-  // const nodeTypes = useMemo(() => ({ genericBlock: FlowNodeBlock }), []);
-  // const edgeTypes = useMemo(() => ({ customEdge: CustomEdge }), []);
+  // Removed state: activeTabKey, theoryContent, theoryIsLoading, theoryError,
+  // isTutorialVisible, tutorialSteps, currentTutorialKey, allTutorialData
 
   useEffect(() => {
-    setTheoryIsLoading(true);
-    setTheoryError(null);
-    fetch('/docs/distributed_theory.md').then(res => res.text())
-      .then(text => setTheoryContent(text))
-      .catch(err => { console.error("Failed to fetch distributed_theory.md", err); setTheoryError(err.message); })
-      .finally(() => setTheoryIsLoading(false));
-
-    fetch('/data/tutorials/distributed_tutorial_en.json')
-      .then(res => res.json())
-      .then(data => setAllTutorialData(data))
-      .catch(error => console.error("Could not fetch distributed tutorial data:", error));
-
+    // Initial peer chain setup remains.
     const newPeersData: Peer[] = peerIds.map(id => {
       const newChain: BlockType[] = [];
       let previousHash = '0'.repeat(64);
@@ -124,22 +78,26 @@ const DistributedPage: NextPage = () => {
         const updatedBlockInChain = peer.chain.find(b => b.id === currentSelectedBlock.id);
         if (updatedBlockInChain && JSON.stringify(updatedBlockInChain) !== JSON.stringify(currentSelectedBlock)) {
           setSelectedBlockInfo({ peerId, block: updatedBlockInChain });
+        } else if (!updatedBlockInChain) {
+            handleModalClose();
         }
+      } else {
+         handleModalClose();
       }
     }
-  }, [peers, selectedBlockInfo]);
+  }, [peers, selectedBlockInfo]); // Added handleModalClose to dependencies if it's memoized, though not strictly needed for setter from useState
 
   const showBlockModal = useCallback((peerId: string, block: BlockType) => {
     setSelectedBlockInfo({ peerId, block });
     setIsModalVisible(true);
   }, []);
 
-  const handleModalClose = () => {
+  const handleModalClose = useCallback(() => {
     setIsModalVisible(false);
     setSelectedBlockInfo(null);
-  };
+  }, []);
 
-  const handleDataChangeInModal = (newData: string) => {
+  const handleDataChangeInModal = useCallback((newData: string) => {
     if (!selectedBlockInfo) return;
     const { peerId, block: currentBlock } = selectedBlockInfo;
     setPeers(prevPeers => prevPeers.map(p => {
@@ -157,9 +115,9 @@ const DistributedPage: NextPage = () => {
       }
       return p;
     }));
-  };
+  }, [selectedBlockInfo]);
 
-  const handleNonceChangeInModal = (newNonceValue: string | number | null | undefined) => {
+  const handleNonceChangeInModal = useCallback((newNonceValue: string | number | null | undefined) => {
     if (!selectedBlockInfo) return;
     const { peerId, block: currentBlock } = selectedBlockInfo;
     const newNonce = Number(newNonceValue ?? 0);
@@ -178,9 +136,9 @@ const DistributedPage: NextPage = () => {
       }
       return p;
     }));
-  };
+  }, [selectedBlockInfo]);
 
-  const handleMineInModal = async () => {
+  const handleMineInModal = useCallback(async () => {
     if (!selectedBlockInfo) return;
     const { peerId, block: blockToMine } = selectedBlockInfo;
     const miningKey = `${peerId}-${blockToMine.id}`;
@@ -216,9 +174,9 @@ const DistributedPage: NextPage = () => {
       return p;
     }));
     setMiningStates(prev => ({ ...prev, [miningKey]: false }));
-  };
+  }, [selectedBlockInfo]);
 
-  const addBlockToPeerChain = (pId: string) => {
+  const addBlockToPeerChain = useCallback((pId: string) => {
     setPeers(currentPeers => currentPeers.map(p => {
       if (p.peerId === pId) {
         const lastBlock = p.chain.length > 0 ? p.chain[p.chain.length - 1] : null;
@@ -235,46 +193,41 @@ const DistributedPage: NextPage = () => {
       }
       return p;
     }));
-  };
+  }, []);
 
-  const handleResetPeerChain = (pId: string) => {
-    setPeers(currentPeers => currentPeers.map(p => {
-      if (p.peerId === pId) {
-        const newInitialChain: BlockType[] = [];
-        let previousHash = "0".repeat(64);
-        for (let i = 0; i < initialChainLength; i++) {
-          const blockNumber = i + 1;
-          const data = `Block ${blockNumber} Data for ${pId}`;
-          const nonce = PRECALCULATED_NONCES_DISTRIBUTED[i] !== undefined ? PRECALCULATED_NONCES_DISTRIBUTED[i] : undefined;
-          const block = createInitialBlock(blockNumber, data, previousHash, nonce, undefined);
-          newInitialChain.push(block);
-          previousHash = block.currentHash;
+  const handleResetPeerChain = useCallback((pId: string) => {
+    Modal.confirm({
+        title: t('ConfirmResetChainTitle', 'Are you sure you want to reset this peer's chain?'),
+        content: t('ConfirmResetChainContent', 'This will restore the chain to its initial state.'),
+        okText: t('Reset', 'Reset'),
+        okType: 'danger',
+        cancelText: t('Cancel', 'Cancel'),
+        onOk: () => {
+            setPeers(currentPeers => currentPeers.map(p => {
+              if (p.peerId === pId) {
+                const newInitialChain: BlockType[] = [];
+                let previousHash = "0".repeat(64);
+                for (let i = 0; i < initialChainLength; i++) {
+                  const blockNumber = i + 1;
+                  const data = `Block ${blockNumber} Data for ${pId}`;
+                  const nonce = PRECALCULATED_NONCES_DISTRIBUTED[i] !== undefined ? PRECALCULATED_NONCES_DISTRIBUTED[i] : undefined;
+                  const block = createInitialBlock(blockNumber, data, previousHash, nonce, undefined);
+                  newInitialChain.push(block);
+                  previousHash = block.currentHash;
+                }
+                const blockIdsToReset = p.chain.map(b => `${pId}-${b.id}`);
+                setMiningStates(prevStates => {
+                    const newStates = {...prevStates};
+                    blockIdsToReset.forEach(id => delete newStates[id]);
+                    return newStates;
+                });
+                return { ...p, chain: newInitialChain };
+              }
+              return p;
+            }));
         }
-        const blockIdsToReset = p.chain.map(b => `${pId}-${b.id}`);
-        setMiningStates(prevStates => {
-            const newStates = {...prevStates};
-            blockIdsToReset.forEach(id => delete newStates[id]);
-            return newStates;
-        });
-        return { ...p, chain: newInitialChain };
-      }
-      return p;
-    }));
-  };
-
-  const startTutorial = (tutorialKey: string) => {
-    if (allTutorialData && allTutorialData[tutorialKey]) {
-      const selectedTutorial = allTutorialData[tutorialKey];
-      const flattenedSteps: TutorialStep[] = selectedTutorial.sections.reduce(
-        (acc: TutorialStep[], section: any) => acc.concat(section.steps), []
-      );
-      setTutorialSteps(flattenedSteps);
-      setCurrentTutorialKey(tutorialKey);
-      setIsTutorialVisible(true);
-    } else {
-      console.warn(`Tutorial with key "${tutorialKey}" not found or data not loaded yet.`);
-    }
-  };
+    });
+  }, [t]);
 
   const executeDistributedActionLogic = (actionType: string, actionParams?: any) => {
     switch (actionType) {
@@ -339,17 +292,6 @@ const DistributedPage: NextPage = () => {
 
   const handleExecuteTutorialAction = (actionType: string, actionParams?: any) => {
     console.log('Distributed Tutorial Action:', actionType, actionParams);
-    const demoInteractionActions = [
-        'HIGHLIGHT_ELEMENT',
-        'OPEN_MODAL_AND_FOCUS_DATA_WHITEBOARD',
-        'OPEN_MODAL_AND_CLICK_MINE_WHITEBOARD'
-    ];
-    if (demoInteractionActions.includes(actionType) && activeTabKey !== "1") {
-      setActiveTabKey("1");
-      setTimeout(() => executeDistributedActionLogic(actionType, actionParams), 100);
-      return;
-    }
-    // activeTabKey state is managed by BlockchainPageLayout.
     executeDistributedActionLogic(actionType, actionParams);
   };
 
@@ -363,9 +305,9 @@ const DistributedPage: NextPage = () => {
       <Row gutter={[16, 24]}>
         {peers.map((peer) => (
           <Col key={peer.peerId} span={24} className="block-card-wrapper">
-            <Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
+            <Typography.Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
               {t(peer.peerId, peer.peerId)}
-            </Title>
+            </Typography.Title>
             <PeerChainVisualization
               peerId={peer.peerId}
               chain={peer.chain}
