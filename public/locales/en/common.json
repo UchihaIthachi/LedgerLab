@@ -111,5 +111,10 @@
   "AllFieldsRequiredError": "Message, Public Key, and Signature are required for verification.",
   "VerificationProcessError": "Error during verification process. Ensure public key and signature formats are correct.",
   "TransactionSigningTitle": "Transaction Signing",
-  "TransactionSigningPageTitle": "Public/Private Key - Transaction Signing"
+  "TransactionSigningPageTitle": "Public/Private Key - Transaction Signing",
+  "pwaInstallPromptMessage": "Install this app to your device for the best experience!",
+  "pwaInstallButton": "Install",
+  "pwaDismissButton": "Later",
+  "networkStatusOnline": "Online",
+  "networkStatusOffline": "Offline"
 }
