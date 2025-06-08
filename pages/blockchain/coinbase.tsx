@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { NextPage } from "next";
+import { useRouter } from 'next/router';
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useTranslation } from "next-i18next";
 import Head from "next/head";
@@ -14,7 +15,7 @@ import {
   Card,
   Modal,
   Tabs,
-  Button, // Standard Antd Button
+  Button,
 } from "antd";
 import { QuestionCircleOutlined, PlusOutlined, ReloadOutlined, ExpandAltOutlined } from '@ant-design/icons';
 import MarkdownRenderer from '@/components/Common/MarkdownRenderer';
@@ -51,13 +52,14 @@ const { Title } = Typography;
 
 const initialChainLength = 3;
 const peerIds = ["Peer A", "Peer B", "Peer C"];
+const PRECALCULATED_NONCES = [6359, 19780, 10510, 13711, 36781]; // Used for reset chain
 
 interface Peer {
   peerId: string;
   chain: BlockType[];
 }
 
-// --- PeerBlockchainFlow Sub-component ---
+// Props for PeerBlockchainFlow (remains the same)
 interface PeerBlockchainFlowProps {
   peer: Peer;
   miningStates: { [key: string]: boolean };
@@ -68,23 +70,25 @@ interface PeerBlockchainFlowProps {
   onResetThisPeerChain: () => void;
 }
 
-const PeerBlockchainFlow: React.FC<PeerBlockchainFlowProps> = React.memo(({
+// Define the Inner Component that has access to React Flow context
+// It now directly receives all props that PeerBlockchainFlow used to, including nodeTypes/edgeTypes
+const InnerFlowCanvasAndControls: React.FC<PeerBlockchainFlowProps> = ({
   peer,
   miningStates: globalMiningStates,
   onShowBlockModal,
-  nodeTypes: nodeTypesExt,
-  edgeTypes: edgeTypesExt,
+  nodeTypes: passedNodeTypes, // Receive from PeerBlockchainFlow
+  edgeTypes: passedEdgeTypes, // Receive from PeerBlockchainFlow
   onAddBlockToThisPeer,
   onResetThisPeerChain,
 }) => {
-  const { t } = useTranslation('common'); // For button tooltips
   const { peerId, chain: peerChain } = peer;
   const [nodes, setNodes, onNodesChange] = useNodesState<CoinbaseFlowNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdgeData>([]);
-  const { fitView } = useReactFlow(); // React Flow hook
+  const { fitView } = useReactFlow(); // Correctly called within a child of ReactFlowProvider
+  const { t } = useTranslation('common');
 
   useEffect(() => {
-    const newNodes: Node<CoinbaseFlowNodeData>[] = peerChain.map((block, index) => ({
+    const newNodesMapped: Node<CoinbaseFlowNodeData>[] = peerChain.map((block, index) => ({
       id: `${peerId}-${block.id}`,
       type: 'coinbaseBlock',
       position: { x: index * 240, y: 50 },
@@ -100,15 +104,16 @@ const PeerBlockchainFlow: React.FC<PeerBlockchainFlowProps> = React.memo(({
         onClick: () => onShowBlockModal(peer.peerId, block),
       },
     }));
+    setNodes(newNodesMapped);
 
-    const newEdges: Edge<CustomEdgeData>[] = [];
+    const newEdgesMapped: Edge<CustomEdgeData>[] = [];
     for (let i = 0; i < peerChain.length - 1; i++) {
       const sourceBlock = peerChain[i];
       const targetBlock = peerChain[i + 1];
       const isLinkValid = sourceBlock.currentHash === targetBlock.previousHash;
       const miningKeySource = `${peerId}-${sourceBlock.id}`;
       const miningKeyTarget = `${peerId}-${targetBlock.id}`;
-      newEdges.push({
+      newEdgesMapped.push({
         id: `edge-${peerId}-${sourceBlock.id}-to-${targetBlock.id}`,
         source: `${peerId}-${sourceBlock.id}`,
         target: `${peerId}-${targetBlock.id}`,
@@ -119,54 +124,64 @@ const PeerBlockchainFlow: React.FC<PeerBlockchainFlowProps> = React.memo(({
         },
       });
     }
-    setNodes(newNodes);
-    setEdges(newEdges);
+    setEdges(newEdgesMapped);
   }, [peerChain, peerId, onShowBlockModal, setNodes, setEdges, globalMiningStates, peer]);
 
   const onConnectInternal = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
   const handleFitView = useCallback(() => fitView({ padding: 0.1, duration: 200 }), [fitView]);
 
   return (
-    <div style={{ width: '100%', height: '350px', marginBottom: '20px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#f9f9f9', position: 'relative' }}>
-      {/* ReactFlowProvider is essential for useReactFlow hook */}
+    <> {/* Fragment to group ReactFlow and its sibling controls */}
+      <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, display: 'flex', gap: '8px' }}>
+        <Button size="small" icon={<PlusOutlined />} onClick={onAddBlockToThisPeer} title={t('AddBlockToThisPeerChain', 'Add Block to this Chain')} />
+        <Button size="small" icon={<ReloadOutlined />} onClick={onResetThisPeerChain} title={t('ResetThisPeerChain', 'Reset this Chain')} />
+        <Button size="small" icon={<ExpandAltOutlined />} onClick={handleFitView} title={t('FitView', 'Fit View')} />
+      </div>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnectInternal}
+        nodeTypes={passedNodeTypes} // Use props for nodeTypes
+        edgeTypes={passedEdgeTypes} // Use props for edgeTypes
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+      >
+        <Controls showInteractive={false} />
+        <Background gap={24} size={1.2} color="#efefef" />
+        <svg>
+          <defs>
+            <marker id="arrowhead-valid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#52c41a" />
+            </marker>
+            <marker id="arrowhead-invalid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#ff4d4f" />
+            </marker>
+            <marker id="arrowhead-default" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#aaa" />
+            </marker>
+          </defs>
+        </svg>
+      </ReactFlow>
+    </>
+  );
+};
+InnerFlowCanvasAndControls.displayName = 'InnerFlowCanvasAndControls';
+
+// Updated PeerBlockchainFlow component
+const PeerBlockchainFlow: React.FC<PeerBlockchainFlowProps> = React.memo((props) => {
+  return (
+    // Added data-peer-id for tutorial targeting
+    <div data-peer-id={props.peer.peerId} style={{ width: '100%', height: '350px', marginBottom: '20px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#f9f9f9', position: 'relative' }}>
       <ReactFlowProvider>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnectInternal}
-          nodeTypes={nodeTypesExt}
-          edgeTypes={edgeTypesExt}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-        >
-          <Controls showInteractive={false} />
-          <Background gap={24} size={1.2} color="#efefef" />
-          <svg>
-            <defs>
-              <marker id="arrowhead-valid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                <path d="M 0 -5 L 10 0 L 0 5 z" fill="#52c41a" />
-              </marker>
-              <marker id="arrowhead-invalid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                <path d="M 0 -5 L 10 0 L 0 5 z" fill="#ff4d4f" />
-              </marker>
-              <marker id="arrowhead-default" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                <path d="M 0 -5 L 10 0 L 0 5 z" fill="#aaa" />
-              </marker>
-            </defs>
-          </svg>
-           <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, display: 'flex', gap: '8px' }}>
-              <Button size="small" icon={<PlusOutlined />} onClick={onAddBlockToThisPeer} title={t('AddBlockToThisPeerChain', 'Add Block to this Chain')} />
-              <Button size="small" icon={<ReloadOutlined />} onClick={onResetThisPeerChain} title={t('ResetThisPeerChain', 'Reset this Chain')} />
-              <Button size="small" icon={<ExpandAltOutlined />} onClick={handleFitView} title={t('FitView', 'Fit View')} />
-            </div>
-        </ReactFlow>
+        <InnerFlowCanvasAndControls {...props} />
       </ReactFlowProvider>
     </div>
   );
 });
 PeerBlockchainFlow.displayName = 'PeerBlockchainFlow';
+
 
 const getInitialCoinbase = (blockNum: number, peerInitial: string): CoinbaseTransactionType => ({
   to: `Miner-${peerInitial}`,
@@ -183,6 +198,7 @@ const getInitialP2PTransactions = (blockNum: number, peerInitial: string): Trans
 
 const CoinbasePage: NextPage = () => {
   const { t } = useTranslation("common");
+  const router = useRouter();
   const [peers, setPeers] = useState<Peer[]>([]);
   const [miningStates, setMiningStates] = useState<{ [key: string]: boolean }>({});
   const [editingTxState, setEditingTxState] = useState<{ [txId: string]: Partial<TransactionType> }>({});
@@ -224,7 +240,7 @@ const CoinbasePage: NextPage = () => {
         const blockNumber = i + 1;
         const coinbaseTx = getInitialCoinbase(blockNumber, peerInitial);
         const p2pTxs = getInitialP2PTransactions(blockNumber, peerInitial);
-        const nonce = PRECALCULATED_NONCES[i] !== undefined ? PRECALCULATED_NONCES[i] : undefined; // Use PRECALCULATED_NONCES
+        const nonce = PRECALCULATED_NONCES[i] !== undefined ? PRECALCULATED_NONCES[i] : undefined;
         const block = createCoinbaseBlock(blockNumber, coinbaseTx, p2pTxs, previousHash, nonce);
         newChain.push(block);
         previousHash = block.currentHash;
@@ -366,7 +382,7 @@ const CoinbasePage: NextPage = () => {
 
   const addBlockToChain = (pId: string) => {
     setPeers(currentPeers => currentPeers.map(p => {
-      if (p.peerId === pId) { // Allow adding to empty chain or non-empty
+      if (p.peerId === pId) {
         const lastBlock = p.chain.length > 0 ? p.chain[p.chain.length - 1] : null;
         const newBlockNumber = lastBlock ? lastBlock.blockNumber + 1 : 1;
         const previousHash = lastBlock ? lastBlock.currentHash : "0".repeat(64);
@@ -426,6 +442,11 @@ const CoinbasePage: NextPage = () => {
 
   const executeCoinbaseActionLogic = (actionType: string, actionParams?: any) => {
     switch (actionType) {
+      case 'NAVIGATE_TO_PAGE':
+        if (actionParams?.path) {
+          router.push(actionParams.path);
+        }
+        break;
       case 'HIGHLIGHT_ELEMENT': {
         if (actionParams?.selector) {
           const element = document.querySelector(actionParams.selector);
@@ -511,7 +532,7 @@ const CoinbasePage: NextPage = () => {
   return (
     <>
       <Head>
-        <title>{t('CoinbaseTransactions')} - {t('BlockchainDemo', 'Blockchain Demo')}</title>
+        <title>{t('CoinbaseTransactions')} - {t('BlockchainDemo')}</title>
       </Head>
       <div style={{ padding: '0 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -540,7 +561,6 @@ const CoinbasePage: NextPage = () => {
                     onAddBlockToThisPeer={() => addBlockToChain(peer.peerId)}
                     onResetThisPeerChain={() => handleResetPeerChain(peer.peerId)}
                   />
-                  {/* Removed old AntButton for adding block here */}
                 </Col>
               ))}
             </Row>

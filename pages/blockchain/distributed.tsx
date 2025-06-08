@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { NextPage } from "next";
-import { useRouter } from 'next/router'; // Import useRouter for NAVIGATE_TO_PAGE
+import { useRouter } from 'next/router';
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useTranslation } from "next-i18next";
 import Head from "next/head";
@@ -63,22 +63,23 @@ interface DistributedPeerFlowProps {
   edgeTypes: any;
   onAddBlockToThisPeer: () => void;
   onResetThisPeerChain: () => void;
+  'data-peer-id'?: string; // For tutorial targeting
 }
 
-const DistributedPeerFlow: React.FC<DistributedPeerFlowProps> = React.memo(({
+const InnerDistributedFlowCanvasAndControls: React.FC<DistributedPeerFlowProps> = ({
   peer,
   miningStates: globalMiningStates,
   onShowBlockModal,
-  nodeTypes: nodeTypesExt,
-  edgeTypes: edgeTypesExt,
+  nodeTypes: passedNodeTypes,
+  edgeTypes: passedEdgeTypes,
   onAddBlockToThisPeer,
   onResetThisPeerChain,
 }) => {
-  const { t } = useTranslation('common');
   const { peerId, chain: peerChain } = peer;
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeBlockData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdgeData>([]);
   const { fitView } = useReactFlow();
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     const newNodes: Node<FlowNodeBlockData>[] = peerChain.map((block, index) => ({
@@ -97,6 +98,7 @@ const DistributedPeerFlow: React.FC<DistributedPeerFlowProps> = React.memo(({
         onClick: () => onShowBlockModal(peer.peerId, block),
       },
     }));
+    setNodes(newNodes);
 
     const newEdges: Edge<CustomEdgeData>[] = [];
     for (let i = 0; i < peerChain.length - 1; i++) {
@@ -116,7 +118,6 @@ const DistributedPeerFlow: React.FC<DistributedPeerFlowProps> = React.memo(({
         },
       });
     }
-    setNodes(newNodes);
     setEdges(newEdges);
   }, [peerChain, peerId, onShowBlockModal, setNodes, setEdges, globalMiningStates, peer]);
 
@@ -124,41 +125,49 @@ const DistributedPeerFlow: React.FC<DistributedPeerFlowProps> = React.memo(({
   const handleFitView = useCallback(() => fitView({ padding: 0.1, duration: 200 }), [fitView]);
 
   return (
-    // Added data-peer-id here for tutorial targeting of the whole peer canvas area
-    <div data-peer-id={peerId} style={{ width: '100%', height: '300px', marginBottom: '20px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#f9f9f9', position: 'relative' }}>
+    <>
+      <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, display: 'flex', gap: '8px' }}>
+        <Button size="small" icon={<PlusOutlined />} onClick={onAddBlockToThisPeer} title={t('AddBlockToThisPeerChain', 'Add Block to this Chain')} />
+        <Button size="small" icon={<ReloadOutlined />} onClick={onResetThisPeerChain} title={t('ResetThisPeerChain', 'Reset this Chain')} />
+        <Button size="small" icon={<ExpandAltOutlined />} onClick={handleFitView} title={t('FitView', 'Fit View')} />
+      </div>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnectInternal}
+        nodeTypes={passedNodeTypes}
+        edgeTypes={passedEdgeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+      >
+        <Controls showInteractive={false} />
+        <Background gap={24} size={1.2} color="#efefef" />
+        <svg>
+          <defs>
+            <marker id="arrowhead-valid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#52c41a" />
+            </marker>
+            <marker id="arrowhead-invalid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#ff4d4f" />
+            </marker>
+            <marker id="arrowhead-default" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#aaa" />
+            </marker>
+          </defs>
+        </svg>
+      </ReactFlow>
+    </>
+  );
+};
+InnerDistributedFlowCanvasAndControls.displayName = "InnerDistributedFlowCanvasAndControls";
+
+const DistributedPeerFlow: React.FC<DistributedPeerFlowProps> = React.memo((props) => {
+  return (
+    <div data-peer-id={props['data-peer-id'] || props.peer.peerId} style={{ width: '100%', height: '300px', marginBottom: '20px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#f9f9f9', position: 'relative' }}>
       <ReactFlowProvider>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnectInternal}
-          nodeTypes={nodeTypesExt}
-          edgeTypes={edgeTypesExt}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-        >
-          <Controls showInteractive={false} />
-          <Background gap={24} size={1.2} color="#efefef" />
-          <svg>
-            <defs>
-              <marker id="arrowhead-valid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                <path d="M 0 -5 L 10 0 L 0 5 z" fill="#52c41a" />
-              </marker>
-              <marker id="arrowhead-invalid" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                <path d="M 0 -5 L 10 0 L 0 5 z" fill="#ff4d4f" />
-              </marker>
-              <marker id="arrowhead-default" viewBox="-0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                <path d="M 0 -5 L 10 0 L 0 5 z" fill="#aaa" />
-              </marker>
-            </defs>
-          </svg>
-          <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, display: 'flex', gap: '8px' }}>
-            <Button size="small" icon={<PlusOutlined />} onClick={onAddBlockToThisPeer} title={t('AddBlockToThisPeerChain', 'Add Block to this Chain')} />
-            <Button size="small" icon={<ReloadOutlined />} onClick={onResetThisPeerChain} title={t('ResetThisPeerChain', 'Reset this Chain')} />
-            <Button size="small" icon={<ExpandAltOutlined />} onClick={handleFitView} title={t('FitView', 'Fit View')} />
-          </div>
-        </ReactFlow>
+        <InnerDistributedFlowCanvasAndControls {...props} />
       </ReactFlowProvider>
     </div>
   );
@@ -196,7 +205,7 @@ const DistributedPage: NextPage = () => {
       .catch(err => { console.error("Failed to fetch distributed_theory.md", err); setTheoryError(err.message); })
       .finally(() => setTheoryIsLoading(false));
 
-    fetch('/data/tutorials/distributed_tutorial_en.json') // Fetch the correct tutorial JSON
+    fetch('/data/tutorials/distributed_tutorial_en.json')
       .then(res => res.json())
       .then(data => setAllTutorialData(data))
       .catch(error => console.error("Could not fetch distributed tutorial data:", error));
@@ -379,7 +388,7 @@ const DistributedPage: NextPage = () => {
 
   const executeDistributedActionLogic = (actionType: string, actionParams?: any) => {
     switch (actionType) {
-      case 'NAVIGATE_TO_PAGE': // Added from main blockchain page for completeness
+      case 'NAVIGATE_TO_PAGE':
         if (actionParams?.path) {
           router.push(actionParams.path);
         }
@@ -396,7 +405,7 @@ const DistributedPage: NextPage = () => {
         break;
       }
       case 'OPEN_MODAL_AND_FOCUS_DATA_WHITEBOARD': {
-        const { peerId, blockOrderInPeerChain } = actionParams; // data field is implied
+        const { peerId, blockOrderInPeerChain } = actionParams;
         const targetPeer = peers.find(p => p.peerId === peerId);
         if (targetPeer && targetPeer.chain.length > blockOrderInPeerChain) {
           const blockToView = targetPeer.chain[blockOrderInPeerChain];
@@ -472,7 +481,7 @@ const DistributedPage: NextPage = () => {
           <Tabs.TabPane tab={t('InteractiveDemoTab', 'Interactive Demo')} key="1">
             <Row gutter={[16, 24]}>
               {peers.map((peer) => (
-                <Col key={peer.peerId} span={24} className="block-card-wrapper"> {/* Ensure this class is useful or remove if not styled */}
+                <Col key={peer.peerId} span={24} className="block-card-wrapper">
                   <Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
                     {t(peer.peerId, peer.peerId)}
                   </Title>
@@ -484,6 +493,7 @@ const DistributedPage: NextPage = () => {
                     edgeTypes={edgeTypes}
                     onAddBlockToThisPeer={() => addBlockToPeerChain(peer.peerId)}
                     onResetThisPeerChain={() => handleResetPeerChain(peer.peerId)}
+                    data-peer-id={peer.peerId} // Added for tutorial targeting
                   />
                 </Col>
               ))}
