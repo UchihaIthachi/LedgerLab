@@ -1,7 +1,8 @@
 import React from 'react';
-import { Card, Form, Input, Button, InputNumber, Descriptions, Typography, Divider, theme } from 'antd'; // Added Divider and theme
+import { Card, Form, Input, Button, InputNumber, Descriptions, Typography, Divider, theme } from 'antd';
+import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons'; // Import icons for title
 import { useTranslation } from 'next-i18next';
-import { TransactionType, CoinbaseTransactionType } from '@/lib/blockchainUtils'; // Import types
+import { TransactionType, CoinbaseTransactionType } from '@/lib/blockchainUtils';
 
 // const { Text } = Typography; // Remove this line
 
@@ -56,13 +57,13 @@ const BlockCard: React.FC<BlockCardProps> = ({
 
   const cardStyle: React.CSSProperties = {
     marginBottom: '20px',
-    borderColor: isValid ? token.colorSuccessBorder : token.colorErrorBorder, // Updated
-    borderWidth: '2px',
+    borderColor: isValid ? token.colorSuccessBorder : token.colorErrorBorder,
+    borderWidth: '1px', // Changed
+    boxShadow: 'var(--box-shadow-standard)', // Added
+    borderRadius: 'var(--border-radius)', // Added
   };
 
-  const cardBodyStyle: React.CSSProperties = {
-    backgroundColor: isValid ? token.colorSuccessBg : token.colorErrorBg, // Updated
-  };
+  // cardBodyStyle is removed
 
   const renderCoinbaseSection = () => {
     if (!coinbase) return null;
@@ -119,7 +120,26 @@ const BlockCard: React.FC<BlockCardProps> = ({
   };
 
   return (
-    <Card title={`${t('Block')} #${blockNumber}`} style={cardStyle} styles={{ body: cardBodyStyle }}>
+    <Card
+      title={
+        <span style={{ display: 'flex', alignItems: 'center' }}>
+          {`${t('Block')} #${blockNumber}`}
+          {isValid ? (
+            <CheckCircleTwoTone
+              twoToneColor={token.colorSuccess}
+              style={{ fontSize: '16px', marginLeft: '8px' }}
+            />
+          ) : (
+            <CloseCircleTwoTone
+              twoToneColor={token.colorError}
+              style={{ fontSize: '16px', marginLeft: '8px' }}
+            />
+          )}
+        </span>
+      }
+      style={cardStyle}
+      // styles={{ body: cardBodyStyle }} prop removed
+    >
       <Form form={form} layout="vertical">
         <Form.Item label={t('BlockNumberLabel', 'Block #')} name="blockNumber">
           <InputNumber readOnly style={{ width: '100%' }} />

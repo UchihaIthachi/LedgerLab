@@ -35,12 +35,14 @@ const CompactBlockCard: React.FC<CompactBlockCardProps> = ({
         width: 180,
         height: 130, // Adjusted for a bit more content if prevHash is shown
         borderColor: isValid ? 'var(--color-success-border)' : 'var(--color-error-border)',
-        borderWidth: '2px',
+        borderWidth: '1px', // Changed from 2px to 1px
+        boxShadow: 'var(--box-shadow-standard)', // Added boxShadow
+        borderRadius: 'var(--border-radius)', // Added borderRadius
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
       }}
-      bodyStyle={{ padding: '8px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}
+      bodyStyle={{ padding: '12px', flexGrow: 1, display: 'flex', flexDirection: 'column' }} // Changed padding from 8px to 12px
       onClick={onClick}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
@@ -54,14 +56,16 @@ const CompactBlockCard: React.FC<CompactBlockCardProps> = ({
         )}
       </div>
       <Tooltip title={currentHash} placement="topLeft">
-        <Text style={{ fontSize: '11px', wordBreak: 'break-all' }} strong>
-          {t('HashAbbreviation', 'Hash')}: {abbreviatedHash(currentHash)}
+        <Text style={{ fontSize: '11px', wordBreak: 'break-all' }}>
+          <Text type="secondary">{t('HashAbbreviation', 'Hash')}: </Text>
+          <Text strong>{abbreviatedHash(currentHash)}</Text>
         </Text>
       </Tooltip>
       {previousHash && ( // Conditionally display previous hash if provided and space allows
          <Tooltip title={previousHash} placement="topLeft">
-            <Text style={{ fontSize: '10px', wordBreak: 'break-all', marginTop: '4px'  }}>
-             {t('PreviousHashAbbreviation', 'Prev. Hash')}: {abbreviatedHash(previousHash)}
+            <Text style={{ fontSize: '10px', wordBreak: 'break-all', marginTop: '4px' }}>
+              <Text type="secondary">{t('PreviousHashAbbreviation', 'Prev. Hash')}: </Text>
+              <Text strong>{abbreviatedHash(previousHash)}</Text>
             </Text>
         </Tooltip>
       )}

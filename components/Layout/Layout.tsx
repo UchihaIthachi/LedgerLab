@@ -301,6 +301,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
+            borderBottom: '1px solid var(--border-color-standard)', // Added
           }}
         >
           <Space>
@@ -334,12 +335,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               minHeight: 360,
               background: "var(--content-background)",
               marginTop: 16,
+              borderRadius: 'var(--border-radius)', // Added
             }}
           >
             {children}
           </div>
         </Content>
-        <Footer style={{ textAlign: "center" }}>
+        <Footer style={{ textAlign: "center", borderTop: '1px solid var(--border-color-standard)' }}> {/* Added borderTop */}
           {t("FooterText", "Blockchain Demo Reimagined")} ©
           {new Date().getFullYear()}
         </Footer>
