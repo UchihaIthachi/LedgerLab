@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography, Tooltip, Button } from 'antd'; // Added Button
+import { Card, Typography, Tooltip, Button, theme } from 'antd'; // Added Button and theme
 import { CheckCircleTwoTone, CloseCircleTwoTone, CloseOutlined } from '@ant-design/icons'; // Added CloseOutlined
 import { useTranslation } from 'next-i18next';
 import { Handle, Position } from 'reactflow'; // Important for connectors
@@ -26,6 +26,7 @@ interface FlowNodeBlockProps {
 
 const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
   const { t } = useTranslation('common');
+  const { token } = theme.useToken(); // Get theme tokens
 
   const abbreviatedHash = (hash: string | undefined) => {
     if (!hash) return 'N/A';
@@ -35,7 +36,7 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
   return (
     <>
       {/* Handles for incoming and outgoing connections */}
-      <Handle type="target" position={Position.Left} style={{ background: '#555' }} />
+      <Handle type="target" position={Position.Left} style={{ background: token.colorBorder }} /> {/* Updated */}
       <Card
         data-block-id={data.id} // Added data-block-id for tutorial targeting
         hoverable
@@ -43,7 +44,7 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
         style={{
           width: 180,
           height: 130,
-          borderColor: data.isValid ? '#52c41a' : '#ff4d4f',
+          borderColor: data.isValid ? token.colorSuccessBorder : token.colorErrorBorder, // Updated
           borderWidth: '2px',
           display: 'flex',
           flexDirection: 'column',
@@ -60,9 +61,9 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
           </Tooltip>
           <Tooltip title={data.isValid ? t('TooltipValidBlock', 'This block is valid.') : t('TooltipInvalidBlock', 'This block is invalid (e.g., tampered data or incorrect nonce).')}>
             {data.isValid ? (
-              <CheckCircleTwoTone twoToneColor="#52c41a" style={{ fontSize: '16px' }} />
+              <CheckCircleTwoTone twoToneColor={token.colorSuccess} style={{ fontSize: '16px' }} /> // Updated
             ) : (
-              <CloseCircleTwoTone twoToneColor="#ff4d4f" style={{ fontSize: '16px' }} />
+              <CloseCircleTwoTone twoToneColor={token.colorError} style={{ fontSize: '16px' }} /> // Updated
             )}
           </Tooltip>
         </div>
@@ -89,7 +90,7 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
             {t('DataAbbreviation', 'Data')}: {data.data}
           </Typography.Text>
         </Tooltip>
-        <Typography.Text style={{ fontSize: '10px', marginTop: 'auto', paddingTop: '4px', color: '#888' }}>
+        <Typography.Text style={{ fontSize: '10px', marginTop: 'auto', paddingTop: '4px', color: token.colorTextTertiary }}> {/* Updated */}
           {t('NonceAbbreviation', 'Nonce')}: {data.nonce}
         </Typography.Text>
         {!data.isGenesis && (
@@ -119,7 +120,7 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
           />
         )}
       </Card>
-      <Handle type="source" position={Position.Right} style={{ background: '#555' }} />
+      <Handle type="source" position={Position.Right} style={{ background: token.colorBorder }} /> {/* Updated */}
     </>
   );
 };

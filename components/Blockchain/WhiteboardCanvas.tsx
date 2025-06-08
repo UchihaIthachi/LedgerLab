@@ -11,7 +11,7 @@ import ReactFlow, {
   useEdgesState,
   useReactFlow, // Import useReactFlow
 } from 'reactflow';
-import { Button } from 'antd'; // Import Button
+import { Button, theme } from 'antd'; // Import Button and theme
 import { ExpandAltOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'; // Import an icon & PlusOutlined, ReloadOutlined
 import 'reactflow/dist/style.css';
 import FlowNodeBlock, { FlowNodeBlockData } from './FlowNodeBlock'; // Adjust path as needed
@@ -27,6 +27,35 @@ const nodeTypes = {
 const edgeTypes = {
   customEdge: CustomEdge,
 };
+
+// SVG Definitions Component
+const SvgDefsComponent = ({ token }: { token: ReturnType<typeof theme.useToken>['token'] }) => (
+  <svg>
+    <defs>
+      <marker
+        id="arrowhead-valid"
+        viewBox="-0 -5 10 10" refX="10" refY="0"
+        markerWidth="7" markerHeight="7" orient="auto-start-reverse"
+      >
+        <path d="M 0 -5 L 10 0 L 0 5 z" fill={token.colorSuccess} />
+      </marker>
+      <marker
+        id="arrowhead-invalid"
+        viewBox="-0 -5 10 10" refX="10" refY="0"
+        markerWidth="7" markerHeight="7" orient="auto-start-reverse"
+      >
+        <path d="M 0 -5 L 10 0 L 0 5 z" fill={token.colorError} />
+      </marker>
+      <marker
+        id="arrowhead-default"
+        viewBox="-0 -5 10 10" refX="10" refY="0"
+        markerWidth="7" markerHeight="7" orient="auto-start-reverse"
+      >
+        <path d="M 0 -5 L 10 0 L 0 5 z" fill={token.colorTextDisabled} />
+      </marker>
+    </defs>
+  </svg>
+);
 
 interface WhiteboardCanvasProps {
   chain: BlockType[];
@@ -48,6 +77,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeBlockData>([]); // Specify NodeData type
   const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdgeData>([]); // Specify EdgeData type for useEdgesState
   const { fitView } = useReactFlow(); // Get fitView function
+  const { token } = theme.useToken(); // Get theme tokens
 
   useEffect(() => {
     const newNodes: Node<FlowNodeBlockData>[] = chain.map((block, index) => ({
@@ -114,45 +144,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
         fitView
       >
         <Controls />
-        <Background />
-        {/* SVG Definitions for Arrowhead Markers */}
-        <svg>
-          <defs>
-            <marker
-              id="arrowhead-valid"
-              viewBox="-0 -5 10 10"
-              refX="10" // Adjust refX so the arrow tip is at the end of the line
-              refY="0"
-              markerWidth="7"
-              markerHeight="7"
-              orient="auto-start-reverse"
-            >
-              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#52c41a" /> {/* z to close path */}
-            </marker>
-            <marker
-              id="arrowhead-invalid"
-              viewBox="-0 -5 10 10"
-              refX="10" // Adjust refX
-              refY="0"
-              markerWidth="7"
-              markerHeight="7"
-              orient="auto-start-reverse"
-            >
-              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#ff4d4f" /> {/* z to close path */}
-            </marker>
-             <marker
-              id="arrowhead-default" // Fallback or for other types of edges if needed
-              viewBox="-0 -5 10 10"
-              refX="10"
-              refY="0"
-              markerWidth="7"
-              markerHeight="7"
-              orient="auto-start-reverse"
-            >
-              <path d="M 0 -5 L 10 0 L 0 5 z" fill="#aaa" /> {/* Default color */}
-            </marker>
-          </defs>
-        </svg>
+        <Background color={token.colorBorder} gap={16} /> {/* Updated Background */}
+        <SvgDefsComponent token={token} /> {/* Use SvgDefsComponent */}
         {/* Add Fit View Button */}
         <div style={{
           position: 'absolute',

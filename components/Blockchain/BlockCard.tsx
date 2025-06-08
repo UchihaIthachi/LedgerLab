@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Form, Input, Button, InputNumber, Descriptions, Typography, Divider } from 'antd'; // Added Divider
+import { Card, Form, Input, Button, InputNumber, Descriptions, Typography, Divider, theme } from 'antd'; // Added Divider and theme
 import { useTranslation } from 'next-i18next';
 import { TransactionType, CoinbaseTransactionType } from '@/lib/blockchainUtils'; // Import types
 
@@ -40,6 +40,7 @@ const BlockCard: React.FC<BlockCardProps> = ({
   onCoinbaseFieldChange, // Placeholder
 }) => {
   const { t } = useTranslation('common');
+  const { token } = theme.useToken(); // Get theme tokens
   const [form] = Form.useForm();
 
   React.useEffect(() => {
@@ -55,12 +56,12 @@ const BlockCard: React.FC<BlockCardProps> = ({
 
   const cardStyle: React.CSSProperties = {
     marginBottom: '20px',
-    borderColor: isValid ? '#52c41a' : '#ff4d4f',
+    borderColor: isValid ? token.colorSuccessBorder : token.colorErrorBorder, // Updated
     borderWidth: '2px',
   };
 
   const cardBodyStyle: React.CSSProperties = {
-    backgroundColor: isValid ? 'rgba(82, 196, 26, 0.05)' : 'rgba(255, 77, 79, 0.05)',
+    backgroundColor: isValid ? token.colorSuccessBg : token.colorErrorBg, // Updated
   };
 
   const renderCoinbaseSection = () => {

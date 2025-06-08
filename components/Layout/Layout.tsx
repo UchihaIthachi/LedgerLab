@@ -15,6 +15,8 @@ import {
   KeyOutlined, // Icon for PKI section
   SignatureOutlined, // Icon for Signatures
   TransactionOutlined, // Icon for PKI Transaction (optional)
+  SunOutlined, // Icon for light mode
+  MoonOutlined, // Icon for dark mode
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { useTranslation } from "next-i18next";
@@ -100,6 +102,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') { // Ensure localStorage is available
       localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+      // Add/remove theme classes on documentElement
+      if (isDarkMode) {
+        document.documentElement.classList.add('theme-dark');
+        document.documentElement.classList.remove('theme-light');
+      } else {
+        document.documentElement.classList.add('theme-light');
+        document.documentElement.classList.remove('theme-dark');
+      }
     }
   }, [isDarkMode]);
 
@@ -295,7 +305,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         >
           <Space>
             <NetworkStatusIndicator />
-            <Switch checked={isDarkMode} onChange={toggleTheme} style={{ marginRight: '16px' }} />
+            <Button
+              onClick={toggleTheme}
+              icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
+              title={isDarkMode ? t('switchToLightMode', 'Switch to Light Mode') : t('switchToDarkMode', 'Switch to Dark Mode')}
+              type="text"
+              style={{ marginRight: '8px' }} // Adjusted margin slightly
+            />
             <Dropdown
               menu={{
                 items: languageMenuItems,

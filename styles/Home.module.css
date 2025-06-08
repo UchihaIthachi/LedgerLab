@@ -209,15 +209,10 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .vercelLogo {
-    filter: invert(1);
-  }
-
-  .logo {
-    filter: invert(1) drop-shadow(0 0 0.3rem #ffffff70);
-  }
-}
+/*
+Removed @media (prefers-color-scheme: dark) block for .vercelLogo and .logo.
+These styles are now handled in globals.css under html.theme-dark
+*/
 
 @keyframes rotate {
   from {
