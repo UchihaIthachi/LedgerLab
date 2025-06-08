@@ -177,10 +177,12 @@ const PeerBlockchainFlow: React.FC<TokenPeerFlowProps> = React.memo((props) => {
 });
 PeerBlockchainFlow.displayName = 'PeerBlockchainFlow';
 
-const getInitialCoinbaseForTokens = (blockNum: number, peerInitial: string): CoinbaseTransactionType => ({
-  to: `Miner-${peerInitial}-Tokens`,
-  value: 50,
-});
+const getInitialCoinbaseForTokens = (blockNum: number, peerInitial: string): CoinbaseTransactionType | undefined => {
+  // Blocks on the /tokens page primarily focus on P2P transactions.
+  // No new currency is typically minted with each block in such a context,
+  // unlike the coinbase page which demonstrates minting.
+  return undefined;
+};
 
 const getInitialP2PTransactionsForTokens = (blockNum: number, peerInitial: string): TransactionType[] => {
   if (blockNum === 1 ) {
@@ -201,7 +203,7 @@ const TokensPage: NextPage = () => {
   const [peers, setPeers] = useState<Peer[]>([]);
   const [miningStates, setMiningStates] = useState<{ [key: string]: boolean }>({});
   const [editingTxState, setEditingTxState] = useState<{ [txId: string]: Partial<TransactionType> }>({});
-  const [editingCoinbaseState, setEditingCoinbaseState] = useState<{ [blockId: string]: Partial<CoinbaseTransactionType> }>({});
+  // const [editingCoinbaseState, setEditingCoinbaseState] = useState<{ [blockId: string]: Partial<CoinbaseTransactionType> }>({}); // Removed
 
   interface SelectedBlockInfo { peerId: string; block: BlockType; }
   const [selectedBlockInfo, setSelectedBlockInfo] = useState<SelectedBlockInfo | null>(null);
@@ -348,26 +350,8 @@ const TokensPage: NextPage = () => {
     }));
   };
 
-  const handleCoinbaseInputChangeInModal = (field: keyof CoinbaseTransactionType, value: string | number) => {
-    if (!selectedBlockInfo) return;
-    const { peerId, block: currentBlock } = selectedBlockInfo;
-    setPeers(prevPeers => prevPeers.map(p => {
-      if (p.peerId === peerId) {
-        let blockIndex = -1;
-        const updatedChain = p.chain.map((b, index) => {
-          if (b.id === currentBlock.id) {
-            blockIndex = index;
-            const currentCoinbase = b.coinbase || { to: `Miner-${peerId.replace('Peer ','')}-Tokens`, value: 0 };
-            return { ...b, coinbase: { ...currentCoinbase, [field]: value } };
-          }
-          return b;
-        });
-        if (blockIndex === -1) return p;
-        return { ...p, chain: updateChainCascading(updatedChain, blockIndex) };
-      }
-      return p;
-    }));
-  };
+  // Removed handleCoinbaseInputChangeInModal as coinbase editing UI is removed for /tokens page.
+  // P2P transaction changes are handled by handleP2PTransactionChangeInModal.
 
   const addBlockToPeerChain = (pId: string) => {
     setPeers(currentPeers => currentPeers.map(p => {
@@ -601,47 +585,7 @@ const TokensPage: NextPage = () => {
               isMining={ miningStates[`${selectedBlockInfo.peerId}-${selectedBlockInfo.block.id}`] || false }
               isFirstBlock={selectedBlockInfo.block.blockNumber === 1}
             />
-            {/* Custom editing UI for P2P and Coinbase Txs in modal, similar to coinbase.tsx */}
-            {selectedBlockInfo.block.coinbase && (
-              <Card size="small" key={`${selectedBlockInfo.block.id}-cb-edit-tokens`} style={{ marginTop: "5px", backgroundColor: "#fafafa" }}>
-                <Space direction="vertical" style={{ width: "100%" }}>
-                  <Typography.Text strong>{t("EditCoinbaseTx", "Edit Coinbase Tx")}</Typography.Text>
-                  <Input addonBefore={t("To")}
-                    value={ editingCoinbaseState[selectedBlockInfo.block.id]?.to ?? selectedBlockInfo.block.coinbase.to }
-                    onChange={(e) => handleCoinbaseInputChangeInModal("to", e.target.value)}
-                  />
-                  <InputNumber addonBefore={t("ValueMinted", "Value (Minted)")}
-                    value={Number(editingCoinbaseState[selectedBlockInfo.block.id]?.value ?? selectedBlockInfo.block.coinbase.value)}
-                    onChange={(value) => handleCoinbaseInputChangeInModal("value", value ?? 0)} style={{ width: "100%" }}
-                  />
-                  <AntButton onClick={() => { /* Apply Coinbase Changes Logic */
-                      if(selectedBlockInfo){
-                          const changes = editingCoinbaseState[selectedBlockInfo.block.id];
-                          if (changes) {
-                              setPeers(prevPeers => prevPeers.map(p => {
-                                  if (p.peerId === selectedBlockInfo.peerId) {
-                                      let blockIndex = -1;
-                                      const updatedChain = p.chain.map((b, index) => {
-                                          if (b.id === selectedBlockInfo.block.id) {
-                                              blockIndex = index;
-                                              return { ...b, coinbase: { ...(b.coinbase || {to:'', value:0}), ...changes } };
-                                          }
-                                          return b;
-                                      });
-                                      if (blockIndex === -1) return p;
-                                      setEditingCoinbaseState(prev => { const newState = {...prev}; delete newState[selectedBlockInfo.block.id]; return newState;});
-                                      return { ...p, chain: updateChainCascading(updatedChain, blockIndex) };
-                                  }
-                                  return p;
-                              }));
-                          }
-                      }
-                  }} type="dashed" size="small">
-                    {t("ApplyCoinbaseChanges", "Apply Coinbase Changes")}
-                  </AntButton>
-                </Space>
-              </Card>
-            )}
+            {/* Coinbase editing Card removed as selectedBlockInfo.block.coinbase will be undefined */}
             {Array.isArray(selectedBlockInfo.block.data) && selectedBlockInfo.block.data.length > 0 && (
               <Card size="small" key={`${selectedBlockInfo.block.id}-p2p-edit-tokens`} style={{ marginTop: "5px", backgroundColor: "#f0f0f0" }}>
                 <Typography.Text strong>{t("EditP2PTxs", "Edit P2P Txs")}</Typography.Text>

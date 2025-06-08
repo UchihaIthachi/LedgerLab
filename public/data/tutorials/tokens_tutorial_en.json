@@ -11,14 +11,14 @@
             "id": "tk_s1_step1",
             "pagePath": "/blockchain/tokens",
             "title": "What are Token Transactions?",
-            "content": "This demo shows blocks filled with Peer-to-Peer (P2P) token transactions, like 'UserA-X sends 50 Tokens to UserB-X'. Each peer maintains their own copy of this ledger.\nLook at Peer X's first block to see example transactions. Note that blocks can also contain a 'Coinbase' transaction which might represent a block reward for a miner.",
+            "content": "This demo shows blocks filled with Peer-to-Peer (P2P) token transactions, like 'UserA-X sends 50 Tokens to UserB-X'. Each peer maintains their own copy of this ledger.\nLook at Peer X's first block to see example transactions. While some blockchains use a 'Coinbase' transaction to mint new currency as a block reward, the blocks on this specific '/tokens' page are designed to focus purely on the transfer of existing tokens; thus, they do not create new currency via coinbase transactions.",
             "uiElementSelector": "div[data-peer-id='Peer X'] div[data-block-id]"
           },
           {
             "id": "tk_s1_step2",
             "pagePath": "/blockchain/tokens",
             "title": "Viewing Transaction Details",
-            "content": "Click on any block node (the visual card on the canvas) to open its details in a modal. You'll see a list of P2P transactions, and potentially a Coinbase transaction if new tokens were minted in that block (as a mining reward).",
+            "content": "Click on any block node (the visual card on the canvas) to open its details in a modal. You'll primarily see a list of P2P transactions that make up the data of this block. Since blocks on this page don't mint new currency, any 'Coinbase' section in the details (if shown by the display component) would be empty or not applicable here.",
             "tryIt": {
               "buttonText": "View Peer X, Block 1 Details",
               "actionType": "OPEN_BLOCK_MODAL",
@@ -54,7 +54,7 @@
             "id": "tk_s2_step1",
             "pagePath": "/blockchain/tokens",
             "title": "Impact of Changes",
-            "content": "Changing any part of a transaction, the nonce, or coinbase data (if present) alters the block's hash, usually making it invalid (its border on the canvas will turn red)."
+            "content": "Changing any part of a P2P transaction or the nonce alters the block's hash, usually making it invalid (its border on the canvas will turn red)."
           },
           {
             "id": "tk_s2_step2",
