@@ -197,7 +197,7 @@ const DistributedPage: NextPage = () => {
 
   const handleResetPeerChain = useCallback((pId: string) => {
     Modal.confirm({
-        title: t('ConfirmResetChainTitle', 'Are you sure you want to reset this peer's chain?'),
+        title: t('ConfirmResetChainTitle', 'Are you sure you want to reset this peer\'s chain?'),
         content: t('ConfirmResetChainContent', 'This will restore the chain to its initial state.'),
         okText: t('Reset', 'Reset'),
         okType: 'danger',
