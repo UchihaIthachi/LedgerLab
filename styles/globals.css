@@ -86,13 +86,13 @@ body {
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
+  /* color: rgb(var(--foreground-rgb)); */ /* Commented out to allow AntD theme to control text color */
+  /* background: linear-gradient(
       to bottom,
       transparent,
       rgb(var(--background-end-rgb))
     )
-    rgb(var(--background-start-rgb));
+    rgb(var(--background-start-rgb)); */ /* Commented out to allow AntD theme to control background */
 }
 
 a {
@@ -121,8 +121,8 @@ a {
 }
 
 .tutorial-highlight {
-  outline: 3px solid #1890ff; /* Ant Design blue */
-  box-shadow: 0 0 15px #1890ff;
+  outline: 3px solid var(--ant-primary-color); /* Updated */
+  box-shadow: 0 0 15px var(--ant-primary-color); /* Updated */
   transition: outline 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   border-radius: 4px; /* Optional: if highlighting cards etc. */
 }
@@ -151,7 +151,8 @@ a {
   margin-bottom: 0.2em;
 }
 .tutorial-content-markdown code {
-  background-color: #f0f0f0;
+  background-color: var(--ant-color-fill-tertiary); /* Updated */
+  color: var(--ant-color-text); /* Updated */
   padding: 0.1em 0.3em;
   border-radius: 3px;
   font-family: monospace;
@@ -162,9 +163,9 @@ a {
   overflow-x: auto;
 }
 .tutorial-content-markdown blockquote {
-  border-left: 3px solid #ccc;
+  border-left: 3px solid var(--ant-color-border); /* Updated */
   padding-left: 10px;
   margin-left: 0;
   font-style: italic;
-  color: #555;
+  color: var(--ant-color-text-secondary); /* Updated */
 }

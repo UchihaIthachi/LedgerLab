@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Layout as AntLayout, Menu, Dropdown, Button, Space } from "antd"; // Added Space
+import { Layout as AntLayout, Menu, Dropdown, Button, Space, ConfigProvider, theme, Switch } from "antd"; // Added Space, ConfigProvider, theme, Switch
 import PwaInstallBanner from "../PWA/PwaInstallBanner"; // Import the banner
 import NetworkStatusIndicator from "../Common/NetworkStatusIndicator"; // Import NetworkStatusIndicator
 import {
@@ -48,6 +48,7 @@ interface AppLayoutProps {
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { t } = useTranslation("common");
   const [collapsed, setCollapsed] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Theme state
   const router = useRouter();
   const { locale: currentLocale, locales, pathname, query, asPath } = router;
 
@@ -84,6 +85,23 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
   }, []);
+
+  // Theme persistence useEffect
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+    } else {
+      // Default to light theme if no preference is found
+      setIsDarkMode(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') { // Ensure localStorage is available
+      localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    }
+  }, [isDarkMode]);
 
   const handlePwaInstall = async () => {
     if (installPromptEvent) {
@@ -225,10 +243,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const selectedKey = pathname;
 
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
+
   return (
-    <AntLayout style={{ minHeight: "100vh" }}>
-      <Sider
-        collapsible
+    <ConfigProvider
+      theme={{
+        algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+      }}
+    >
+      <AntLayout style={{ minHeight: "100vh" }}>
+        <Sider
+          collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
       >
@@ -270,6 +295,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         >
           <Space>
             <NetworkStatusIndicator />
+            <Switch checked={isDarkMode} onChange={toggleTheme} style={{ marginRight: '16px' }} />
             <Dropdown
               menu={{
                 items: languageMenuItems,
@@ -308,6 +334,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         onDismiss={handlePwaDismiss}
       />
     </AntLayout>
+    </ConfigProvider>
   );
 };
 

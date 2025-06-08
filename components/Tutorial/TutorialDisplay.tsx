@@ -69,7 +69,7 @@ const TutorialDisplay: React.FC<TutorialDisplayProps> = ({
         maxHeight: 'calc(100vh - 100px)', // Ensure it doesn't go off-screen
         overflowY: 'auto',
         zIndex: 1050, // Higher zIndex to be above most elements, but less than modals if needed
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        // boxShadow: '0 4px 12px rgba(0,0,0,0.15)', // Removed to allow AntD theme shadow
       }}
       bodyStyle={{padding: '16px'}}
     >
