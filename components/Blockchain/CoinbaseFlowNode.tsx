@@ -1,0 +1,108 @@
+import React from 'react';
+import { Card, Typography, Tooltip, Tag } from 'antd';
+import { CheckCircleTwoTone, CloseCircleTwoTone, GoldTwoTone, SwapOutlined } from '@ant-design/icons';
+import { Handle, Position } from 'reactflow';
+import { useTranslation } from 'next-i18next';
+// Assuming types are correctly imported or defined if not using a central types/tutorial.ts for these specific types
+// For this component, we'll assume BlockType from blockchainUtils includes coinbase and transactions array
+import { BlockType as GenericBlockType, CoinbaseTransactionType, TransactionType } from '@/lib/blockchainUtils';
+
+const { Text, Title } = Typography;
+
+// Define a more specific type for the data prop based on GenericBlockType
+// This helps ensure the component receives what it expects.
+// The 'transactions' field from GenericBlockType is assumed to be the P2P transactions.
+// The 'coinbase' field is already part of GenericBlockType.
+export interface CoinbaseFlowNodeData extends Omit<GenericBlockType, 'data' | 'id'> {
+  // React Flow specific ID, different from block's own data ID if necessary
+  id: string;
+  // Explicitly define fields expected by this node, derived from BlockType
+  p2pTransactions?: TransactionType[]; // Use this if BlockType.data is a union
+  onClick: () => void;
+  // 'data-block-id' for DOM targeting, using the block's actual data ID from chain
+  'data-block-id': string;
+}
+
+
+interface CoinbaseFlowNodeProps {
+  data: CoinbaseFlowNodeData;
+}
+
+const CoinbaseFlowNode: React.FC<CoinbaseFlowNodeProps> = ({ data }) => {
+  const { t } = useTranslation('common');
+
+  const abbreviatedHash = (hash: string | undefined) => {
+    if (!hash) return 'N/A';
+    return `${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
+  };
+
+  const p2pTxCount = data.p2pTransactions?.length || 0;
+
+  return (
+    // Use data['data-block-id'] which should be the original block.id for targeting
+    <div data-block-id={data['data-block-id']}>
+      <Handle type="target" position={Position.Left} style={{ background: '#555' }} />
+      <Card
+        hoverable
+        size="small"
+        style={{
+          width: 200,
+          borderColor: data.isValid ? '#52c41a' : '#ff4d4f',
+          borderWidth: '2px',
+        }}
+        bodyStyle={{ padding: '8px', minHeight: '110px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }} // Ensure consistent height
+        onClick={data.onClick}
+        title={
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <Tooltip title={t('TooltipBlockNumber', 'This is the unique identifier for the block in the chain.')}>
+              <Title level={5} style={{ margin: 0, fontSize: '14px' }}>
+                {t('Block', 'Block')} #{data.blockNumber}
+              </Title>
+            </Tooltip>
+            <Tooltip title={data.isValid ? t('TooltipValidBlock', 'This block is valid.') : t('TooltipInvalidBlock', 'This block is invalid.')}>
+              {data.isValid ? (
+                <CheckCircleTwoTone twoToneColor="#52c41a" style={{ fontSize: '16px' }} />
+              ) : (
+                <CloseCircleTwoTone twoToneColor="#ff4d4f" style={{ fontSize: '16px' }} />
+              )}
+            </Tooltip>
+          </div>
+        }
+      >
+        <div> {/* Content wrapper for hashes */}
+          <Tooltip title={data.currentHash} placement="topLeft">
+            <Text style={{ fontSize: '11px', wordBreak: 'break-all', display: 'block', marginBottom: '4px' }} strong>
+              <Tooltip title={t('TooltipHash', 'A cryptographic hash uniquely representing this block\'s content and header.')} placement="bottomLeft">
+                {t('HashAbbreviation', 'Hash')}:
+              </Tooltip>
+              {' '}{abbreviatedHash(data.currentHash)}
+            </Text>
+          </Tooltip>
+          {data.previousHash && (
+             <Tooltip title={data.previousHash} placement="topLeft">
+                <Text style={{ fontSize: '10px', wordBreak: 'break-all', display: 'block', marginBottom: '8px' }}>
+                  <Tooltip title={t('TooltipPreviousHash', 'The hash of the preceding block, linking this block to the chain.')} placement="bottomLeft">
+                    {t('PreviousHashAbbreviation', 'Prev. Hash')}:
+                  </Tooltip>
+                 {' '}{abbreviatedHash(data.previousHash)}
+                </Text>
+            </Tooltip>
+          )}
+        </div>
+        <div style={{textAlign: 'center', marginTop: 'auto'}}> {/* Tx info pushed to bottom */}
+          {data.coinbaseTx && (
+            <Tag icon={<GoldTwoTone />} color="gold" style={{ marginBottom: '4px', display: 'block' }}>
+              {t('CoinbaseTxShort', 'Coinbase Rewarded')}
+            </Tag>
+          )}
+          <Tag icon={<SwapOutlined />} color="blue" style={{display: 'block'}}>
+            {p2pTxCount} {t(p2pTxCount === 1 ? 'P2PTxShortSingular' : 'P2PTxShortPlural', `${p2pTxCount} P2P Tx(s)`)}
+          </Tag>
+        </div>
+      </Card>
+      <Handle type="source" position={Position.Right} style={{ background: '#555' }} />
+    </div>
+  );
+};
+
+export default CoinbaseFlowNode;

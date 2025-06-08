@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from 'react-markdown'; // Add this line back
 import { Button, Card, Typography, Space } from 'antd';
 import { ArrowLeftOutlined, ArrowRightOutlined, CloseOutlined } from '@ant-design/icons';
 import { TutorialStep } from '@/types/tutorial'; // Import from types/tutorial.ts
@@ -73,7 +73,7 @@ const TutorialDisplay: React.FC<TutorialDisplayProps> = ({
       }}
       bodyStyle={{padding: '16px'}}
     >
-      <div style={{ marginBottom: '16px', maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }}> {/* Max height for content area */}
+      <div style={{ marginBottom: '16px', maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }} className="tutorial-content-markdown"> {/* Added a class */}
         <ReactMarkdown>{currentStep.content}</ReactMarkdown>
       </div>
 

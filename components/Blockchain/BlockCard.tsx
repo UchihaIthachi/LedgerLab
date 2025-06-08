@@ -144,6 +144,7 @@ const BlockCard: React.FC<BlockCardProps> = ({
             loading={isMining}
             block
             tooltip={{ title: t('MineButtonTooltip', "Click to find a new nonce that makes this block's hash valid (starts with '0000').") }}
+            data-testid="mine-button-in-modal" // Added for tutorial targeting
           >
             {t('Mine', 'Mine')}
           </Button>

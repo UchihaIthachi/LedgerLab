@@ -126,3 +126,45 @@ a {
   transition: outline 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   border-radius: 4px; /* Optional: if highlighting cards etc. */
 }
+
+/* Basic styles for .tutorial-content-markdown */
+.tutorial-content-markdown p {
+  margin-bottom: 0.5em;
+  line-height: 1.6;
+}
+.tutorial-content-markdown h1,
+.tutorial-content-markdown h2,
+.tutorial-content-markdown h3,
+.tutorial-content-markdown h4,
+.tutorial-content-markdown h5,
+.tutorial-content-markdown h6 {
+  margin-top: 0.8em;
+  margin-bottom: 0.4em;
+  line-height: 1.3;
+}
+.tutorial-content-markdown ul,
+.tutorial-content-markdown ol {
+  margin-bottom: 0.5em;
+  padding-left: 20px;
+}
+.tutorial-content-markdown li {
+  margin-bottom: 0.2em;
+}
+.tutorial-content-markdown code {
+  background-color: #f0f0f0;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-family: monospace;
+}
+.tutorial-content-markdown pre code {
+  display: block;
+  padding: 0.5em;
+  overflow-x: auto;
+}
+.tutorial-content-markdown blockquote {
+  border-left: 3px solid #ccc;
+  padding-left: 10px;
+  margin-left: 0;
+  font-style: italic;
+  color: #555;
+}

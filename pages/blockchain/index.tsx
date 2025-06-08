@@ -4,8 +4,10 @@ import { useRouter } from 'next/router'; // Added useRouter
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
-import { Modal, Button, Space } from 'antd'; // Removed FloatButton, Added Space
+import { Modal, Button, Space, Tabs, Typography } from 'antd'; // Added Tabs, Typography
 import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons'; // Added QuestionCircleOutlined
+// import ReactMarkdown from 'react-markdown'; // No longer directly used here
+import MarkdownRenderer from '@/components/Common/MarkdownRenderer'; // Import MarkdownRenderer
 import BlockCard from '@/components/Blockchain/BlockCard';
 import TutorialDisplay from '@/components/Tutorial/TutorialDisplay'; // Import TutorialDisplay
 import { TutorialStep } from '@/types/tutorial'; // Import TutorialStep
@@ -35,6 +37,13 @@ const BlockchainIndexPage: NextPage = () => {
   const [currentTutorialKey, setCurrentTutorialKey] = useState<string | null>(null);
   const [allTutorialData, setAllTutorialData] = useState<any | null>(null); // Using any for raw JSON
 
+  // State for theory content
+  const [theoryContent, setTheoryContent] = useState<string>('');
+  const [theoryIsLoading, setTheoryIsLoading] = useState<boolean>(true);
+  const [theoryError, setTheoryError] = useState<string | null>(null);
+
+  const [activeTabKey, setActiveTabKey] = useState<string>("1"); // State for active tab
+
   const [chain, setChain] = useState<BlockType[]>([]);
   const [miningStates, setMiningStates] = useState<{[key: string]: boolean}>({});
 
@@ -55,6 +64,28 @@ const BlockchainIndexPage: NextPage = () => {
       })
       .catch((error) => {
         console.error("Could not fetch tutorial data:", error);
+      });
+
+    // Fetch Theory Content
+    setTheoryIsLoading(true);
+    setTheoryError(null);
+    fetch('/docs/blockchain.md')
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status} - ${res.statusText}`);
+        }
+        return res.text();
+      })
+      .then((text) => {
+        setTheoryContent(text);
+      })
+      .catch((error) => {
+        console.error("Could not fetch theory content:", error);
+        setTheoryError(error.message);
+        setTheoryContent(''); // Clear content on error
+      })
+      .finally(() => {
+        setTheoryIsLoading(false);
       });
 
     // Initial chain setup
@@ -276,11 +307,11 @@ const BlockchainIndexPage: NextPage = () => {
     });
   };
 
-  const handleExecuteTutorialAction = (actionType: string, actionParams?: any) => {
-    console.log('Executing tutorial action:', actionType, actionParams); // For debugging
-
+  // Encapsulate the existing switch logic into a new function
+  const executeActionLogic = (actionType: string, actionParams?: any) => {
     switch (actionType) {
       case 'NAVIGATE_TO_PAGE':
+        // For NAVIGATE_TO_PAGE, we don't need to switch tabs first, just navigate.
         if (actionParams?.path) {
           router.push(actionParams.path);
         }
@@ -405,26 +436,68 @@ const BlockchainIndexPage: NextPage = () => {
     }
   };
 
+  const handleExecuteTutorialAction = (actionType: string, actionParams?: any) => {
+    console.log('Executing tutorial action:', actionType, actionParams);
+
+    const demoInteractionActions = [
+      'HIGHLIGHT_ELEMENT',
+      'FOCUS_ELEMENT',
+      'OPEN_BLOCK_MODAL',
+      'OPEN_BLOCK_MODAL_AND_FOCUS_DATA',
+      'CLICK_MINE_BUTTON'
+    ];
+
+    if (demoInteractionActions.includes(actionType)) {
+      if (activeTabKey !== "1") {
+        setActiveTabKey("1");
+        setTimeout(() => {
+          executeActionLogic(actionType, actionParams);
+        }, 100); // Increased delay slightly for tab switch rendering
+        return;
+      }
+    }
+    executeActionLogic(actionType, actionParams);
+  };
+
   return (
     <>
       <Head>
         <title>{String(t('Blockchain', 'Blockchain'))} - {String(t('Blockchain Demo'))}</title>
       </Head>
-      <div>
-        <Space align="center" style={{ marginBottom: '16px' }}>
-          <h1>{t('BlockchainViewTitle', 'Blockchain - Chain View')}</h1>
+      <div style={{ padding: '0 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <Typography.Title level={2} style={{ margin: 0 }}>
+            {t('BlockchainPageTitle', 'Blockchain Demonstration')}
+          </Typography.Title>
           <Button icon={<QuestionCircleOutlined />} onClick={() => startTutorial('blockchainTutorial')}>
-            {t('StartTutorialButton', 'Start Tutorial')}
+            {t('StartTutorial', 'Start Tutorial')}
           </Button>
-        </Space>
-        <WhiteboardWrapper
-          chain={chain}
-          onNodeClick={showModal}
-          miningBlockId={currentMiningBlockId}
-          onNodeRemove={handleRemoveBlock}
-          onAddBlock={handleAddBlock}
-          onResetChain={handleResetChain}
-        />
+        </div>
+
+        <Tabs activeKey={activeTabKey} onChange={setActiveTabKey}> {/* Control active tab */}
+          <Tabs.TabPane tab={t('InteractiveDemoTab', 'Interactive Demo')} key="1">
+            <WhiteboardWrapper
+              chain={chain}
+              onNodeClick={showModal}
+              miningBlockId={currentMiningBlockId}
+              onNodeRemove={handleRemoveBlock}
+              onAddBlock={handleAddBlock}
+              onResetChain={handleResetChain}
+            />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab={t('TheoryTab', 'Theory & Explanation')} key="2">
+            <div style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', padding: '10px' }}>
+              <MarkdownRenderer
+                markdownContent={theoryContent}
+                isLoading={theoryIsLoading}
+                error={theoryError}
+                className="tutorial-content-markdown" // Use the existing class for styling
+                loadingMessage={t('LoadingTheory', 'Loading theory...')}
+                errorMessagePrefix={t('ErrorLoadingTheoryPrefix', 'Error loading content:')}
+              />
+            </div>
+          </Tabs.TabPane>
+        </Tabs>
 
         {isTutorialVisible && tutorialSteps.length > 0 && (
           <TutorialDisplay
