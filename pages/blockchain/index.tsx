@@ -3,24 +3,19 @@ import { NextPage } from 'next';
 import { useRouter } from 'next/router'; // Added useRouter
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
-// Head, Tabs, MarkdownRenderer, TutorialDisplay, QuestionCircleOutlined will be removed or handled by Layout
-import { Modal, Button, Space, Typography } from 'antd'; // Modal might be removed if BlockDetailModal handles it all
-import { PlusOutlined } from '@ant-design/icons'; // Removed QuestionCircleOutlined
-// BlockCard import will be removed as BlockDetailModal uses it internally
-// import BlockCard from '@/components/Blockchain/BlockCard';
-// TutorialStep might still be needed if handleExecuteTutorialAction uses it, but likely not directly
-// import { TutorialStep } from '@/types/tutorial';
-import WhiteboardWrapper from '@/components/Blockchain/WhiteboardCanvas'; // Add this
-import BlockchainPageLayout from '@/components/Layout/BlockchainPageLayout'; // Import the new layout
-import BlockDetailModal from '@/components/Blockchain/BlockDetailModal'; // Import the new modal
-import useSimpleChain from '@/hooks/useSimpleChain'; // Import the new hook
-import {
-  BlockType,
-  // calculateHash, // Handled by hook
-  // checkValidity, // Handled by hook
-  // createInitialBlock, // Handled by hook
-  // MAX_NONCE, // Handled by hook
-} from '@/lib/blockchainUtils'; // Keep BlockType if used in function signatures
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { NextPage } from 'next';
+import { useRouter } from 'next/router';
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { useTranslation } from 'next-i18next';
+import { Modal, Button, Typography } from 'antd'; // Space might be removed, PlusOutlined might be removed.
+// PlusOutlined is used by WhiteboardWrapper -> PeerChainVisualization. Keep for now.
+import { PlusOutlined } from '@ant-design/icons';
+import WhiteboardWrapper from '@/components/Blockchain/WhiteboardCanvas';
+import BlockchainPageLayout from '@/components/Layout/BlockchainPageLayout';
+import BlockDetailModal from '@/components/Blockchain/BlockDetailModal';
+import useSimpleChain from '@/hooks/useSimpleChain';
+import { BlockType } from '@/lib/blockchainUtils';
 
 // Define constants for initial chain setup - these will be passed to the hook
 const INITIAL_CHAIN_LENGTH = 5;
@@ -29,18 +24,18 @@ const PRECALCULATED_NONCES = [6359, 19780, 10510, 13711, 36781];
 
 const BlockchainIndexPage: NextPage = () => {
   const { t } = useTranslation('common');
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
 
   const {
     chain,
     miningStates,
     initializeChain,
-    addBlock,
-    resetChain,
-    updateBlockData,
-    updateBlockNonce,
-    mineBlock,
-    removeBlock,
+    addBlock, // Renamed to handleAddBlockFromHook below
+    resetChain, // Renamed to handleResetChainWithModal below
+    updateBlockData, // Renamed to handleDataChangeInModal below
+    updateBlockNonce, // Renamed to handleNonceChangeInModal below
+    mineBlock, // Renamed to handleMineInModal below
+    removeBlock, // Renamed to handleRemoveBlockWithModal below
   } = useSimpleChain();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -138,16 +133,14 @@ const BlockchainIndexPage: NextPage = () => {
   // handleAddBlock now directly uses the hook's addBlock
   const handleAddBlockFromHook = addBlock;
 
-  // Tutorial Action Logic
+  // Tutorial Action Logic - This should remain as it's page-specific
   const executeActionLogic = (actionType: string, actionParams?: any) => {
     switch (actionType) {
       case 'NAVIGATE_TO_PAGE':
-        // For NAVIGATE_TO_PAGE, we don't need to switch tabs first, just navigate.
         if (actionParams?.path) {
           router.push(actionParams.path);
         }
         break;
-
       case 'HIGHLIGHT_ELEMENT':
         if (actionParams?.selector) {
           const element = document.querySelector(actionParams.selector);
@@ -161,7 +154,6 @@ const BlockchainIndexPage: NextPage = () => {
           }
         }
         break;
-
       case 'FOCUS_ELEMENT':
         if (actionParams?.selector) {
           const element = document.querySelector(actionParams.selector) as HTMLElement;
@@ -172,175 +164,97 @@ const BlockchainIndexPage: NextPage = () => {
           }
         }
         break;
-
       case 'OPEN_BLOCK_MODAL': {
-        if (actionParams?.blockNumber && chain.length >= actionParams.blockNumber) {
-            const blockToOpen = chain[actionParams.blockNumber - 1];
-            if (blockToOpen) {
-                showModal(blockToOpen);
-            }
-        } else if (actionParams?.selector) {
-            const nodeElement = document.querySelector(actionParams.selector);
-            if (nodeElement) {
-                const blockId = nodeElement.getAttribute('data-block-id');
-                const blockToOpen = chain.find(b => b.id === blockId);
-                if (blockToOpen) showModal(blockToOpen);
-                else console.warn("Tutorial: Block not found for node selector " + actionParams.selector);
+        const blockIdToOpen = actionParams?.blockId || (actionParams?.blockNumber && chain[actionParams.blockNumber -1])?.id;
+        const blockToOpen = chain.find(b =>
+            (actionParams?.blockNumber && b.blockNumber === actionParams.blockNumber) ||
+            (actionParams?.selector && b.id === (document.querySelector(actionParams.selector)?.getAttribute('data-block-id'))) ||
+            (blockIdToOpen && b.id === blockIdToOpen)
+        );
+        if (blockToOpen) {
+            showModal(blockToOpen);
+        } else {
+            console.warn("Tutorial: Block not found for OPEN_BLOCK_MODAL", actionParams);
+        }
+        break;
+      }
+      case 'OPEN_BLOCK_MODAL_AND_FOCUS_DATA': {
+        const blockToOpen = chain.find(b => actionParams?.blockNumber && b.blockNumber === actionParams.blockNumber);
+        if (blockToOpen) {
+            showModal(blockToOpen);
+            setTimeout(() => {
+                const dataTextArea = document.querySelector('.ant-modal-body textarea[name="data"]') as HTMLTextAreaElement; // This selector might need update if BlockCard structure changes
+                if (dataTextArea && typeof dataTextArea.focus === 'function') {
+                    dataTextArea.focus();
+                    dataTextArea.select();
+                } else {
+                    console.warn("Tutorial: Data textarea not found in modal.");
+                }
+            }, 100);
+        }
+        break;
+      }
+      case 'CLICK_MINE_BUTTON': {
+        const blockIdToMine = selectedBlock?.id || (actionParams?.blockNumber && chain[actionParams.blockNumber-1])?.id;
+        if(selectedBlock && blockIdToMine === selectedBlock.id) { // If modal is open for the target block
+            const mineButton = document.querySelector('.ant-modal-body button.ant-btn-primary[data-testid="mine-button-in-modal"]') as HTMLElement; // Check if testid is still there
+            if (mineButton) mineButton.click();
+            else console.warn("Tutorial: Mine button not found in modal for current block.");
+        } else if (blockIdToMine) {
+            const blockToOpenAndMine = chain.find(b => b.id === blockIdToMine);
+            if (blockToOpenAndMine) {
+                showModal(blockToOpenAndMine);
+                setTimeout(() => {
+                    const mineButton = document.querySelector('.ant-modal-body button.ant-btn-primary[data-testid="mine-button-in-modal"]') as HTMLElement;
+                    if (mineButton) mineButton.click();
+                    else  console.warn(`Tutorial: Mine button not found in modal for block ${blockIdToMine}.`);
+                }, 100);
             } else {
-                 console.warn("Tutorial: Node element not found for selector " + actionParams.selector);
+                 console.warn(`Tutorial: Block not found to open and mine: ${blockIdToMine}`);
             }
         }
         break;
       }
-
-      case 'OPEN_BLOCK_MODAL_AND_FOCUS_DATA':
-        if (actionParams?.blockNumber && chain.length >= actionParams.blockNumber) {
-            const blockToOpen = chain[actionParams.blockNumber - 1];
-            if (blockToOpen) {
-                showModal(blockToOpen);
-                setTimeout(() => {
-                    const dataTextArea = document.querySelector('.ant-modal-body textarea[name="data"]') as HTMLTextAreaElement;
-                    if (dataTextArea && typeof dataTextArea.focus === 'function') {
-                        dataTextArea.focus();
-                        dataTextArea.select();
-                    } else {
-                        console.warn("Tutorial: Data textarea not found in modal.");
-                    }
-                }, 100);
-            }
-        }
-        break;
-
-      case 'CLICK_MINE_BUTTON':
-        if (selectedBlock) {
-            const mineButton = document.querySelector('.ant-modal-body button.ant-btn-primary') as HTMLElement;
-            if (mineButton && mineButton.innerText.toLowerCase().includes('mine')) {
-                mineButton.click();
-            } else {
-                 console.warn("Tutorial: Mine button not found in modal for current block.");
-            }
-        } else if (actionParams?.blockNumber) {
-            const blockToMine = chain[actionParams.blockNumber - 1];
-            if (blockToMine) {
-                showModal(blockToMine);
-                setTimeout(() => {
-                    const mineButton = document.querySelector('.ant-modal-body button.ant-btn-primary') as HTMLElement;
-                    if (mineButton && mineButton.innerText.toLowerCase().includes('mine')) {
-                        mineButton.click();
-                    } else {
-                         console.warn(`Tutorial: Mine button not found in modal for block ${actionParams.blockNumber}.`);
-                    }
-                }, 100);
-            }
-        }
-        break;
-
       default:
         console.warn(`Tutorial: Unknown actionType: ${actionType}`);
     }
   };
 
-  const startTutorial = (tutorialKey: string) => {
-    if (allTutorialData && allTutorialData[tutorialKey]) {
-      const selectedTutorial = allTutorialData[tutorialKey];
-      const flattenedSteps: TutorialStep[] = selectedTutorial.sections.reduce(
-        (acc: TutorialStep[], section: any) => acc.concat(section.steps),
-        []
-      );
-      // Simple filter for current page or generic steps - might need refinement
-      const relevantSteps = flattenedSteps.filter(step => {
-        if (!step.pagePath) return true; // Always include if no specific page
-        if (Array.isArray(step.pagePath)) return step.pagePath.includes(router.pathname);
-        return step.pagePath === router.pathname;
-      });
-
-      // If, after filtering, no steps are relevant for the current page,
-      // it might be better to show the first step of the tutorial and rely on NAVIGATE_TO_PAGE.
-      // For now, this simplified filter is used. A more robust solution might involve
-      // loading all steps and letting TutorialDisplay manage current page relevance or navigation.
-      // Let's use all steps for now and rely on NAVIGATE_TO_PAGE.
-      setTutorialSteps(flattenedSteps);
-      setCurrentTutorialKey(tutorialKey);
-      setIsTutorialVisible(true);
-    } else {
-      console.warn(`Tutorial with key "${tutorialKey}" not found or data not loaded yet.`);
-    }
-  };
-
+  // This is the function passed to BlockchainPageLayout
   const handleExecuteTutorialAction = (actionType: string, actionParams?: any) => {
-    console.log('Executing tutorial action:', actionType, actionParams);
-
-    const demoInteractionActions = [
-      'HIGHLIGHT_ELEMENT',
-      'FOCUS_ELEMENT',
-      'OPEN_BLOCK_MODAL',
-      'OPEN_BLOCK_MODAL_AND_FOCUS_DATA',
-      'CLICK_MINE_BUTTON'
-    ];
-
-    if (demoInteractionActions.includes(actionType)) {
-      if (activeTabKey !== "1") {
-        setActiveTabKey("1");
-        setTimeout(() => {
-          executeActionLogic(actionType, actionParams);
-        }, 100); // Increased delay slightly for tab switch rendering
-        return;
-      }
-    }
-    // The main executeActionLogic and its caller handleExecuteTutorialAction should be preserved.
-    // The old startTutorial function that sets steps and visibility is removed.
+    // Tab switching logic, if any, would be handled by BlockchainPageLayout or tutorial steps themselves.
+    // This function now directly calls the action logic.
     executeActionLogic(actionType, actionParams);
   };
-
-  // The actual activeTabKey state is now managed by BlockchainPageLayout.
-  // If handleExecuteTutorialAction needs to switch tabs, it might need a different approach
-  // or the layout could expose a function to do so, or this logic is simplified.
-  // For now, assuming the layout handles tab display and this page only provides content.
-  // The original logic for handleExecuteTutorialAction switching tabs if not on "1" for demo actions
-  // will be temporarily broken or needs rethinking if layout doesn't expose tab control.
-  // However, the tutorial steps themselves should ideally handle navigation if a specific tab is required.
 
   return (
     <BlockchainPageLayout
       pageTitle={t('BlockchainPageTitle', 'Blockchain Demonstration')}
       theoryDocPath="/docs/blockchain.md"
       tutorialKey="blockchainTutorial"
-      onExecuteTutorialAction={handleExecuteTutorialAction} // Pass the existing handler
+      onExecuteTutorialAction={handleExecuteTutorialAction}
     >
       <WhiteboardWrapper
         chain={chain}
         onNodeClick={showModal}
         miningBlockId={currentMiningBlockId}
-        onNodeRemove={handleRemoveBlock}
-        onAddBlock={handleAddBlock}
-        onResetChain={handleResetChain}
+        onNodeRemove={handleRemoveBlockWithModal}
+        onAddBlock={handleAddBlockFromHook}
+        onResetChain={handleResetChainWithModal}
       />
       {selectedBlock && (
-        <Modal
-          title={`${t('BlockDetailsTitle', 'Block Details')} - ${t('Block', 'Block')} #${selectedBlock.blockNumber}`}
-            visible={isModalVisible}
-            onOk={handleOk}
-            onCancel={handleCancel}
-            width={800}
-            footer={[ <Button key="close" onClick={handleOk}> {t('CloseButton', 'Close')} </Button> ]}
-          >
-            <BlockCard
-              blockNumber={selectedBlock.blockNumber}
-              nonce={selectedBlock.nonce}
-              data={selectedBlock.data}
-              previousHash={selectedBlock.previousHash}
-              currentHash={selectedBlock.currentHash}
-              isValid={selectedBlock.isValid}
-              onDataChange={(e) => handleDataChange(selectedBlock.id, e.target.value)}
-              onNonceChange={(value) => handleNonceChange(selectedBlock.id, value)}
-              onMine={() => handleMine(selectedBlock.id)}
-              isMining={miningStates[selectedBlock.id] || false}
-              isFirstBlock={selectedBlock.blockNumber === 1}
-            />
-          </Modal>
-        )}
-      </div>
-    </>
+        <BlockDetailModal
+          visible={isModalVisible}
+          onClose={handleCancel}
+          selectedBlockInfo={{ block: selectedBlock }}
+          miningState={miningStates[selectedBlock.id] || false}
+          onMine={() => handleMineInModal(selectedBlock.id)}
+          onNonceChange={(value) => handleNonceChangeInModal(selectedBlock.id, value)}
+          onSimpleDataChange={(newData) => handleDataChangeInModal(selectedBlock.id, newData)}
+          blockDataType="simple_text"
+        />
+      )}
+    </BlockchainPageLayout>
   );
 };
 
