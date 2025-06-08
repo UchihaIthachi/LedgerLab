@@ -12,11 +12,18 @@ const { Text } = Typography;
 // TopoJSON data for US states
 const US_STATES_TOPOJSON_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
 
-// ZKP Demo Constants
-const COLOR_PALETTE = ['#FF6B6B', '#6BCB77', '#4D96FF']; // Red, Green, Blue
-const HIDDEN_COLOR = '#E0E0E0'; // Light Gray for hidden states
-const BORDER_COLOR = '#FFFFFF';
-const SELECTED_BORDER_COLOR = '#F5A623'; // Orange for selected states
+// ZKP Demo Constants - Now referencing CSS Variables
+const COLOR_PALETTE = [
+  'var(--zkp-map-palette-1)',
+  'var(--zkp-map-palette-2)',
+  'var(--zkp-map-palette-3)',
+];
+const HIDDEN_COLOR = 'var(--zkp-map-hidden-color)';
+const BORDER_COLOR = 'var(--zkp-map-border-color)';
+const SELECTED_BORDER_COLOR = 'var(--zkp-map-selected-border-color)';
+const HOVER_COLOR = 'var(--zkp-map-hover-color)'; // For non-participating states
+const PRESSED_COLOR = 'var(--zkp-map-pressed-color)'; // For non-participating states
+
 
 // Hardcoded base 3-coloring for a subset of US States (using FIPS codes as IDs)
 // This is our "secret" knowledge for the ZKP demo.
@@ -208,7 +215,16 @@ const ZeroKnowledgeProofPage: NextPage = () => {
 
         <Row gutter={[16, 16]} justify="center" style={{ marginTop: '20px', marginBottom: '20px' }}>
           <Col xs={24} md={18} lg={16}>
-            <div style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '10px', minHeight: '400px', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f2f5' }}>
+            <div style={{
+              border: '1px solid var(--zkp-map-container-border)',
+              borderRadius: '4px',
+              padding: '10px',
+              minHeight: '400px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'var(--zkp-map-container-bg)'
+            }}>
               {loadingMap && <Spin tip={t('LoadingMap', "Loading map...")} size="large" />}
               {mapError && !loadingMap && <Alert message={mapError} type="error" showIcon />}
               {!loadingMap && !mapError && mapData && (
@@ -234,8 +250,8 @@ const ZeroKnowledgeProofPage: NextPage = () => {
                             onClick={() => handleStateClick(geo)}
                             style={{
                               default: { outline: 'none', transition: 'fill 0.2s ease' },
-                              hover: { outline: 'none', fill: isParticipating ? COLOR_PALETTE[0] : '#CCC' , opacity: 0.7 }, // Simple hover
-                              pressed: { outline: 'none', fill: isParticipating ? COLOR_PALETTE[1] : '#BBB' },
+                              hover: { outline: 'none', fill: isParticipating ? COLOR_PALETTE[0] : HOVER_COLOR , opacity: 0.7 },
+                              pressed: { outline: 'none', fill: isParticipating ? COLOR_PALETTE[1] : PRESSED_COLOR },
                             }}
                           />
                         );

@@ -4,7 +4,7 @@ import styles from '@/styles/Home.module.css'; // Keep for .main and potentially
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
-import { Card, Row, Col, Typography } from 'antd';
+import { Card, Row, Col, Typography, theme } from 'antd'; // Added theme
 import { AppstoreOutlined, KeyOutlined, LockOutlined } from '@ant-design/icons'; // Using LockOutlined for ZKP
 import { motion } from 'framer-motion';
 
@@ -32,11 +32,12 @@ type Props = {
 
 export default function Home(_props: InferGetStaticPropsType<typeof getStaticProps>) {
   const { t } = useTranslation('common');
+  const { token } = theme.useToken(); // Added for theme token access
 
   const demoSections = [
     {
       href: '/blockchain',
-      icon: <AppstoreOutlined style={{ fontSize: '24px', color: '#1890ff' }} />,
+      icon: <AppstoreOutlined style={{ fontSize: '24px', color: token.colorPrimary }} />,
       titleKey: 'BlockchainDemoCardTitle',
       defaultTitle: 'Blockchain Demo',
       textKey: 'BlockchainDemoCardText',
@@ -44,7 +45,7 @@ export default function Home(_props: InferGetStaticPropsType<typeof getStaticPro
     },
     {
       href: '/public-private-key',
-      icon: <KeyOutlined style={{ fontSize: '24px', color: '#52c41a' }} />,
+      icon: <KeyOutlined style={{ fontSize: '24px', color: token.colorSuccess }} />,
       titleKey: 'PublicPrivateKeyCardTitle',
       defaultTitle: 'Public/Private Keys & Signing',
       textKey: 'PublicPrivateKeyCardText',
@@ -52,7 +53,7 @@ export default function Home(_props: InferGetStaticPropsType<typeof getStaticPro
     },
     {
       href: '/zero-knowledge-proof',
-      icon: <LockOutlined style={{ fontSize: '24px', color: '#eb2f96' }} />,
+      icon: <LockOutlined style={{ fontSize: '24px', color: token.colorWarning }} />, // Changed to colorWarning
       titleKey: 'ZeroKnowledgeProofCardTitle',
       defaultTitle: 'Zero Knowledge Proofs',
       textKey: 'ZKPPageDescription', // Re-using existing translation key from ZKP page for consistency

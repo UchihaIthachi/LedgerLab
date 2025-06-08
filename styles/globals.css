@@ -1,4 +1,6 @@
 :root {
+  --header-background: #fff;
+  --content-background: #fff;
   --max-width: 1100px;
   --border-radius: 12px;
   --font-mono: ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono',
@@ -38,10 +40,28 @@
   --callout-border-rgb: 172, 175, 176;
   --card-rgb: 180, 185, 188;
   --card-border-rgb: 131, 134, 135;
+  --border-color-standard: #d9d9d9; /* AntD neutral-5 for borders */
+  --color-success-border: #52c41a;
+  --color-error-border: #ff4d4f;
+  --box-shadow-standard: 0 4px 12px rgba(0,0,0,0.15);
+
+  /* ZKP Map Colors */
+  --zkp-map-palette-1: #FF6B6B;
+  --zkp-map-palette-2: #6BCB77;
+  --zkp-map-palette-3: #4D96FF;
+  --zkp-map-hidden-color: rgba(0,0,0,0.1);
+  --zkp-map-border-color: #FFFFFF;
+  --zkp-map-selected-border-color: #F5A623;
+  --zkp-map-hover-color: #DDDDDD;
+  --zkp-map-pressed-color: #BBBBBB;
+  --zkp-map-container-bg: rgb(var(--callout-rgb));
+  --zkp-map-container-border: var(--border-color-standard);
 }
 
 /* Dark theme variables, applied when html.theme-dark is present */
 html.theme-dark {
+  --header-background: #1f1f1f;
+  --content-background: #141414;
   --foreground-rgb: 255, 255, 255;
   --background-start-rgb: 0, 0, 0;
   --background-end-rgb: 0, 0, 0;
@@ -70,6 +90,22 @@ html.theme-dark {
   --callout-border-rgb: 108, 108, 108;
   --card-rgb: 100, 100, 100;
   --card-border-rgb: 200, 200, 200;
+  --border-color-standard: #424242; /* AntD dark theme neutral-5 for borders */
+  --color-success-border: #73d13d; /* Lighter green for dark mode */
+  --color-error-border: #f87e7e; /* Lighter red for dark mode */
+  --box-shadow-standard: 0 4px 12px rgba(0,0,0,0.4); /* Adjusted shadow for dark mode */
+
+  /* ZKP Map Colors */
+  --zkp-map-palette-1: #E57373; /* Lighter Red */
+  --zkp-map-palette-2: #81C784; /* Lighter Green */
+  --zkp-map-palette-3: #64B5F6; /* Lighter Blue */
+  --zkp-map-hidden-color: rgba(255,255,255,0.15);
+  --zkp-map-border-color: rgba(255,255,255,0.3);
+  --zkp-map-selected-border-color: #FFB74D; /* Lighter Orange */
+  --zkp-map-hover-color: #555555;
+  --zkp-map-pressed-color: #777777;
+  --zkp-map-container-bg: rgb(var(--callout-rgb));
+  --zkp-map-container-border: var(--border-color-standard);
 
   /* Logo filter changes for dark mode will be added here later */
 }
@@ -128,6 +164,10 @@ a {
 }
 
 /* Basic styles for .tutorial-content-markdown */
+.tutorial-content-markdown {
+  color: rgb(var(--foreground-rgb));
+}
+
 .tutorial-content-markdown p {
   margin-bottom: 0.5em;
   line-height: 1.6;

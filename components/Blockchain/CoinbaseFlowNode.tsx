@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography, Tooltip, Tag } from 'antd';
+import { Card, Typography, Tooltip, Tag, theme } from 'antd'; // Added theme
 import { CheckCircleTwoTone, CloseCircleTwoTone, GoldTwoTone, SwapOutlined } from '@ant-design/icons';
 import { Handle, Position } from 'reactflow';
 import { useTranslation } from 'next-i18next';
@@ -30,6 +30,7 @@ interface CoinbaseFlowNodeProps {
 
 const CoinbaseFlowNode: React.FC<CoinbaseFlowNodeProps> = ({ data }) => {
   const { t } = useTranslation('common');
+  const { token } = theme.useToken(); // Get theme tokens
 
   const abbreviatedHash = (hash: string | undefined | null): string => {
     if (typeof hash === 'string' && hash.length > 10) {
@@ -46,13 +47,13 @@ const CoinbaseFlowNode: React.FC<CoinbaseFlowNodeProps> = ({ data }) => {
   return (
     // Use data['data-block-id'] which should be the original block.id for targeting
     <div data-block-id={data['data-block-id']}>
-      <Handle type="target" position={Position.Left} style={{ background: '#555' }} />
+      <Handle type="target" position={Position.Left} style={{ background: token.colorBorder }} />
       <Card
         hoverable
         size="small"
         style={{
           width: 200,
-          borderColor: data.isValid ? '#52c41a' : '#ff4d4f',
+          borderColor: data.isValid ? token.colorSuccessBorder : token.colorErrorBorder,
           borderWidth: '2px',
         }}
         bodyStyle={{ padding: '8px', minHeight: '110px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }} // Ensure consistent height
@@ -66,9 +67,9 @@ const CoinbaseFlowNode: React.FC<CoinbaseFlowNodeProps> = ({ data }) => {
             </Tooltip>
             <Tooltip title={data.isValid ? t('TooltipValidBlock', 'This block is valid.') : t('TooltipInvalidBlock', 'This block is invalid.')}>
               {data.isValid ? (
-                <CheckCircleTwoTone twoToneColor="#52c41a" style={{ fontSize: '16px' }} />
+                <CheckCircleTwoTone twoToneColor={token.colorSuccess} style={{ fontSize: '16px' }} />
               ) : (
-                <CloseCircleTwoTone twoToneColor="#ff4d4f" style={{ fontSize: '16px' }} />
+                <CloseCircleTwoTone twoToneColor={token.colorError} style={{ fontSize: '16px' }} />
               )}
             </Tooltip>
           </div>
@@ -96,16 +97,16 @@ const CoinbaseFlowNode: React.FC<CoinbaseFlowNodeProps> = ({ data }) => {
         </div>
         <div style={{textAlign: 'center', marginTop: 'auto'}}> {/* Tx info pushed to bottom */}
           {data.coinbaseTx && (
-            <Tag icon={<GoldTwoTone />} color="gold" style={{ marginBottom: '4px', display: 'block' }}>
+            <Tag icon={<GoldTwoTone />} color="gold" style={{ marginBottom: '4px', display: 'block' }}> {/* AntD gold tag should be theme aware */}
               {t('CoinbaseTxShort', 'Coinbase Rewarded')}
             </Tag>
           )}
-          <Tag icon={<SwapOutlined />} color="blue" style={{display: 'block'}}>
+          <Tag icon={<SwapOutlined />} color="blue" style={{display: 'block'}}> {/* AntD blue tag should be theme aware */}
             {p2pTxCount} {t(p2pTxCount === 1 ? 'P2PTxShortSingular' : 'P2PTxShortPlural', `${p2pTxCount} P2P Tx(s)`)}
           </Tag>
         </div>
       </Card>
-      <Handle type="source" position={Position.Right} style={{ background: '#555' }} />
+      <Handle type="source" position={Position.Right} style={{ background: token.colorBorder }} />
     </div>
   );
 };

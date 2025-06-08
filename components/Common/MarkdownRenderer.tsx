@@ -19,6 +19,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   errorMessagePrefix = "Error loading content:",
   className = "markdown-content-container" // Default class for styling
 }) => {
+  // Combine the passed className with tutorial-content-markdown
+  const containerClassName = `tutorial-content-markdown ${className}`.trim();
+
   if (isLoading) {
     return <Typography.Text>{loadingMessage}</Typography.Text>;
   }
@@ -35,7 +38,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   }
 
   return (
-    <div className={className}>
+    <div className={containerClassName}>
       <ReactMarkdown>{markdownContent}</ReactMarkdown>
     </div>
   );

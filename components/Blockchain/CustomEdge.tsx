@@ -35,7 +35,7 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
 
   const edgeStyle = {
     strokeWidth: isValid ? 3 : 2, // Thicker for valid, thinner for invalid/broken
-    stroke: isValid ? '#52c41a' : '#ff4d4f', // Green for valid, Red for invalid
+    stroke: isValid ? 'var(--color-success-border)' : 'var(--color-error-border)', // Using CSS Variables
     ...(isAnimating && {
       animation: 'pulse 2s infinite',
     }),

@@ -34,7 +34,7 @@ const CompactBlockCard: React.FC<CompactBlockCardProps> = ({
       style={{
         width: 180,
         height: 130, // Adjusted for a bit more content if prevHash is shown
-        borderColor: isValid ? '#52c41a' : '#ff4d4f', // Green for valid, Red for invalid
+        borderColor: isValid ? 'var(--color-success-border)' : 'var(--color-error-border)',
         borderWidth: '2px',
         display: 'flex',
         flexDirection: 'column',
@@ -48,9 +48,9 @@ const CompactBlockCard: React.FC<CompactBlockCardProps> = ({
           {t('Block', 'Block')} #{blockNumber}
         </Title>
         {isValid ? (
-          <CheckCircleTwoTone twoToneColor="#52c41a" style={{ fontSize: '16px' }} />
+          <CheckCircleTwoTone twoToneColor="var(--color-success-border)" style={{ fontSize: '16px' }} />
         ) : (
-          <CloseCircleTwoTone twoToneColor="#ff4d4f" style={{ fontSize: '16px' }} />
+          <CloseCircleTwoTone twoToneColor="var(--color-error-border)" style={{ fontSize: '16px' }} />
         )}
       </div>
       <Tooltip title={currentHash} placement="topLeft">

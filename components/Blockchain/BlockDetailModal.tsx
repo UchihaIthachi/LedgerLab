@@ -84,7 +84,7 @@ const BlockDetailModal: React.FC<BlockDetailModalProps> = (props) => {
       />
 
       {blockDataType === 'transactions_with_coinbase' && block.coinbase && onCoinbaseChange && (
-        <Card size="small" key={`${block.id}-cb-edit-modal`} style={{ marginTop: "10px", backgroundColor: "#fafafa" }}>
+        <Card size="small" key={`${block.id}-cb-edit-modal`} style={{ marginTop: "10px" }}> {/* Removed backgroundColor */}
           <Space direction="vertical" style={{ width: "100%" }}>
             <Typography.Text strong>{t("EditCoinbaseTx", "Edit Coinbase Tx")}</Typography.Text>
             <Input
@@ -109,13 +109,13 @@ const BlockDetailModal: React.FC<BlockDetailModalProps> = (props) => {
       )}
 
       {(blockDataType === 'transactions_with_coinbase' || blockDataType === 'transactions_only') && Array.isArray(block.data) && block.data.length > 0 && onP2PTransactionChange && (
-        <Card size="small" key={`${block.id}-p2p-edit-modal`} style={{ marginTop: "10px", backgroundColor: "#f0f0f0" }}>
+        <Card size="small" key={`${block.id}-p2p-edit-modal`} style={{ marginTop: "10px" }}> {/* Removed backgroundColor */}
           <Typography.Text strong>{t("EditP2PTxs", "Edit P2P Txs")}</Typography.Text>
           {(block.data as TransactionType[]).map((tx, txIndex) => (
             <Space
               direction="vertical"
               key={tx.id}
-              style={{ width: "100%", marginTop: "10px", paddingTop: "10px", borderTop: txIndex > 0 ? "1px dashed #ccc" : "none" }}
+              style={{ width: "100%", marginTop: "10px", paddingTop: "10px", borderTop: txIndex > 0 ? "1px dashed var(--border-color-standard)" : "none" }}
               data-p2p-tx-index={txIndex} // For tutorial targeting
             >
               <Input

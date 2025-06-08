@@ -297,7 +297,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <Header
           style={{
             padding: "0 16px",
-            background: "#fff",
+            background: "var(--header-background)",
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
@@ -332,7 +332,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             style={{
               padding: 24,
               minHeight: 360,
-              background: "#fff",
+              background: "var(--content-background)",
               marginTop: 16,
             }}
           >
