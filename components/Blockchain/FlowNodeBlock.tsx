@@ -9,12 +9,14 @@ const { Text, Title } = Typography;
 export interface FlowNodeBlockData {
   id: string;
   blockNumber: number;
+  nonce: number; // Added nonce
+  data: string; // Added data (as string for display)
   currentHash: string;
   previousHash?: string;
   isValid: boolean;
   onClick: () => void;
-  onRemove: (id: string) => void; // Added onRemove
-  isGenesis: boolean; // Added isGenesis
+  onRemove: (id: string) => void;
+  isGenesis: boolean;
   // Add any other data needed for display
 }
 
@@ -82,6 +84,14 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
             </Text>
           </Tooltip>
         )}
+        <Tooltip title={data.data} placement="bottom">
+          <Text style={{ fontSize: '10px', marginTop: '4px', fontStyle: 'italic', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {t('DataAbbreviation', 'Data')}: {data.data}
+          </Text>
+        </Tooltip>
+        <Text style={{ fontSize: '10px', marginTop: 'auto', paddingTop: '4px', color: '#888' }}>
+          {t('NonceAbbreviation', 'Nonce')}: {data.nonce}
+        </Text>
         {!data.isGenesis && (
           <Button
             icon={<CloseOutlined />}

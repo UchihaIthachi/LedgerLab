@@ -14,9 +14,9 @@ import {
   Card,
   Modal,
   Tabs,
-  Button,
+  Button, // Standard Antd Button
 } from "antd";
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import { QuestionCircleOutlined, PlusOutlined, ReloadOutlined, ExpandAltOutlined } from '@ant-design/icons';
 import MarkdownRenderer from '@/components/Common/MarkdownRenderer';
 import TutorialDisplay from '@/components/Tutorial/TutorialDisplay';
 import { TutorialStep } from '@/types/tutorial';
@@ -31,6 +31,7 @@ import ReactFlow, {
   useEdgesState,
   addEdge,
   Connection,
+  useReactFlow, // Import for fitView hook
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import CoinbaseFlowNode, { CoinbaseFlowNodeData } from '@/components/Blockchain/CoinbaseFlowNode';
@@ -56,12 +57,15 @@ interface Peer {
   chain: BlockType[];
 }
 
+// --- PeerBlockchainFlow Sub-component ---
 interface PeerBlockchainFlowProps {
   peer: Peer;
   miningStates: { [key: string]: boolean };
   onShowBlockModal: (peerId: string, block: BlockType) => void;
   nodeTypes: any;
   edgeTypes: any;
+  onAddBlockToThisPeer: () => void;
+  onResetThisPeerChain: () => void;
 }
 
 const PeerBlockchainFlow: React.FC<PeerBlockchainFlowProps> = React.memo(({
@@ -70,10 +74,14 @@ const PeerBlockchainFlow: React.FC<PeerBlockchainFlowProps> = React.memo(({
   onShowBlockModal,
   nodeTypes: nodeTypesExt,
   edgeTypes: edgeTypesExt,
+  onAddBlockToThisPeer,
+  onResetThisPeerChain,
 }) => {
+  const { t } = useTranslation('common'); // For button tooltips
   const { peerId, chain: peerChain } = peer;
   const [nodes, setNodes, onNodesChange] = useNodesState<CoinbaseFlowNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdgeData>([]);
+  const { fitView } = useReactFlow(); // React Flow hook
 
   useEffect(() => {
     const newNodes: Node<CoinbaseFlowNodeData>[] = peerChain.map((block, index) => ({
@@ -116,9 +124,11 @@ const PeerBlockchainFlow: React.FC<PeerBlockchainFlowProps> = React.memo(({
   }, [peerChain, peerId, onShowBlockModal, setNodes, setEdges, globalMiningStates, peer]);
 
   const onConnectInternal = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+  const handleFitView = useCallback(() => fitView({ padding: 0.1, duration: 200 }), [fitView]);
 
   return (
-    <div style={{ width: '100%', height: '350px', marginBottom: '20px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#f9f9f9' }}>
+    <div style={{ width: '100%', height: '350px', marginBottom: '20px', border: '1px solid #d9d9d9', borderRadius: '8px', background: '#f9f9f9', position: 'relative' }}>
+      {/* ReactFlowProvider is essential for useReactFlow hook */}
       <ReactFlowProvider>
         <ReactFlow
           nodes={nodes}
@@ -146,6 +156,11 @@ const PeerBlockchainFlow: React.FC<PeerBlockchainFlowProps> = React.memo(({
               </marker>
             </defs>
           </svg>
+           <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, display: 'flex', gap: '8px' }}>
+              <Button size="small" icon={<PlusOutlined />} onClick={onAddBlockToThisPeer} title={t('AddBlockToThisPeerChain', 'Add Block to this Chain')} />
+              <Button size="small" icon={<ReloadOutlined />} onClick={onResetThisPeerChain} title={t('ResetThisPeerChain', 'Reset this Chain')} />
+              <Button size="small" icon={<ExpandAltOutlined />} onClick={handleFitView} title={t('FitView', 'Fit View')} />
+            </div>
         </ReactFlow>
       </ReactFlowProvider>
     </div>
@@ -209,7 +224,8 @@ const CoinbasePage: NextPage = () => {
         const blockNumber = i + 1;
         const coinbaseTx = getInitialCoinbase(blockNumber, peerInitial);
         const p2pTxs = getInitialP2PTransactions(blockNumber, peerInitial);
-        const block = createCoinbaseBlock(blockNumber, coinbaseTx, p2pTxs, previousHash);
+        const nonce = PRECALCULATED_NONCES[i] !== undefined ? PRECALCULATED_NONCES[i] : undefined; // Use PRECALCULATED_NONCES
+        const block = createCoinbaseBlock(blockNumber, coinbaseTx, p2pTxs, previousHash, nonce);
         newChain.push(block);
         previousHash = block.currentHash;
       }
@@ -350,17 +366,45 @@ const CoinbasePage: NextPage = () => {
 
   const addBlockToChain = (pId: string) => {
     setPeers(currentPeers => currentPeers.map(p => {
-      if (p.peerId === pId && p.chain.length > 0) {
-        const lastBlock = p.chain[p.chain.length - 1];
-        const newBlockNumber = lastBlock.blockNumber + 1;
+      if (p.peerId === pId) { // Allow adding to empty chain or non-empty
+        const lastBlock = p.chain.length > 0 ? p.chain[p.chain.length - 1] : null;
+        const newBlockNumber = lastBlock ? lastBlock.blockNumber + 1 : 1;
+        const previousHash = lastBlock ? lastBlock.currentHash : "0".repeat(64);
         const peerInitial = pId.replace('Peer ', '');
         const newBlock = createCoinbaseBlock(
           newBlockNumber,
           getInitialCoinbase(newBlockNumber, peerInitial),
           getInitialP2PTransactions(newBlockNumber, peerInitial),
-          lastBlock.currentHash
+          previousHash
         );
         return { ...p, chain: [...p.chain, newBlock] };
+      }
+      return p;
+    }));
+  };
+
+  const handleResetPeerChain = (pId: string) => {
+    setPeers(currentPeers => currentPeers.map(p => {
+      if (p.peerId === pId) {
+        const peerInitial = p.peerId.replace('Peer ', '');
+        const newInitialChain: BlockType[] = [];
+        let previousHash = "0".repeat(64);
+        for (let i = 0; i < initialChainLength; i++) {
+          const blockNumber = i + 1;
+          const coinbaseTx = getInitialCoinbase(blockNumber, peerInitial);
+          const p2pTxs = getInitialP2PTransactions(blockNumber, peerInitial);
+          const nonce = PRECALCULATED_NONCES[i] !== undefined ? PRECALCULATED_NONCES[i] : undefined;
+          const block = createCoinbaseBlock(blockNumber, coinbaseTx, p2pTxs, previousHash, nonce);
+          newInitialChain.push(block);
+          previousHash = block.currentHash;
+        }
+        const blockIdsToReset = p.chain.map(b => `${pId}-${b.id}`);
+        setMiningStates(prevStates => {
+            const newStates = {...prevStates};
+            blockIdsToReset.forEach(id => delete newStates[id]);
+            return newStates;
+        });
+        return { ...p, chain: newInitialChain };
       }
       return p;
     }));
@@ -393,7 +437,7 @@ const CoinbasePage: NextPage = () => {
         }
         break;
       }
-      case 'OPEN_BLOCK_MODAL': { // Added from tutorial JSON
+      case 'OPEN_BLOCK_MODAL': {
         const { peerId, blockOrder } = actionParams;
         const targetPeer = peers.find(p => p.peerId === peerId);
         if (targetPeer && targetPeer.chain[blockOrder]) {
@@ -408,7 +452,6 @@ const CoinbasePage: NextPage = () => {
         if (targetPeer && targetPeer.chain[blockOrder]) {
           const blockToView = targetPeer.chain[blockOrder];
           showBlockModal(targetPeer.peerId, blockToView);
-
           setTimeout(() => {
             const specificTxContainer = document.querySelector(`.ant-modal-body [data-p2p-tx-index="${p2pTxIndex}"]`);
             if (specificTxContainer) {
@@ -424,7 +467,7 @@ const CoinbasePage: NextPage = () => {
         } else { console.warn("Peer or block not found for OPEN_BLOCK_MODAL_AND_FOCUS_P2P_TX", actionParams); }
         break;
       }
-      case 'OPEN_MODAL_AND_CLICK_MINE_WHITEBOARD': { // Matched JSON actionType
+      case 'OPEN_MODAL_AND_CLICK_MINE_WHITEBOARD': {
         const { peerId, blockOrder } = actionParams;
         const targetPeer = peers.find(p => p.peerId === peerId);
         if (targetPeer && targetPeer.chain[blockOrder]) {
@@ -494,10 +537,10 @@ const CoinbasePage: NextPage = () => {
                     onShowBlockModal={showBlockModal}
                     nodeTypes={nodeTypes}
                     edgeTypes={edgeTypes}
+                    onAddBlockToThisPeer={() => addBlockToChain(peer.peerId)}
+                    onResetThisPeerChain={() => handleResetPeerChain(peer.peerId)}
                   />
-                   <AntButton onClick={() => addBlockToChain(peer.peerId)} style={{ marginTop: '10px', display: 'block', marginLeft: 'auto', marginRight: 'auto' }}>
-                    {t('AddBlockToPeer', `Add Block to ${peer.peerId}`)}
-                  </AntButton>
+                  {/* Removed old AntButton for adding block here */}
                 </Col>
               ))}
             </Row>
@@ -612,14 +655,6 @@ const CoinbasePage: NextPage = () => {
                         if(selectedBlockInfo){
                             const changes = editingTxState[tx.id];
                             if (changes) {
-                               // Direct call to handleP2PTransactionChange for each field is not ideal.
-                               // This should ideally be a single call that processes all changes for a tx.
-                               // For simplicity of this step, we'll assume a more direct update or that
-                               // handleP2PTransactionChange is smart enough.
-                               // A better approach would be to collect all changes for txId and then make one call.
-                               // For now, let's assume we call multiple times if multiple fields changed,
-                               // or the original applyTxChanges was better.
-                               // Reverting to a simpler apply for this example.
                                 setPeers(prevPeers => prevPeers.map(p => {
                                   if (p.peerId === selectedBlockInfo.peerId) {
                                       let blockIndex = -1;
