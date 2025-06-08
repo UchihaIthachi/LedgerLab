@@ -31,9 +31,14 @@ interface CoinbaseFlowNodeProps {
 const CoinbaseFlowNode: React.FC<CoinbaseFlowNodeProps> = ({ data }) => {
   const { t } = useTranslation('common');
 
-  const abbreviatedHash = (hash: string | undefined) => {
-    if (!hash) return 'N/A';
-    return `${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
+  const abbreviatedHash = (hash: string | undefined | null): string => {
+    if (typeof hash === 'string' && hash.length > 10) {
+      return `${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
+    }
+    if (typeof hash === 'string') {
+      return hash;
+    }
+    return 'N/A';
   };
 
   const p2pTxCount = data.p2pTransactions?.length || 0;
