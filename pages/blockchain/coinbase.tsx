@@ -48,7 +48,7 @@ import {
   updateChainCascading as updateCoinbaseChainCascading,
 } from "@/lib/blockchainUtils";
 
-const { Title } = Typography;
+// const { Title } = Typography; // Remove destructuring
 
 const initialChainLength = 3; // Used for initial setup and reset
 const peerIds = ["Peer A", "Peer B", "Peer C"];
@@ -570,9 +570,9 @@ const CoinbasePage: NextPage = () => {
             <Row gutter={[16, 24]}>
               {peers.map((peer) => (
                 <Col key={peer.peerId} span={24} className="block-card-wrapper">
-                  <Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
+                  <Typography.Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
                     {t(peer.peerId, peer.peerId)}
-                  </Title>
+                  </Typography.Title>
                   <PeerBlockchainFlow
                     peer={peer}
                     miningStates={miningStates}
@@ -635,7 +635,7 @@ const CoinbasePage: NextPage = () => {
             {selectedBlockInfo.block.coinbase && (
               <Card size="small" key={`${selectedBlockInfo.block.id}-cb-edit-modal`} style={{ marginTop: "5px", backgroundColor: "#fafafa" }}>
                 <Space direction="vertical" style={{ width: "100%" }}>
-                  <Text strong>{t("EditCoinbaseTx", "Edit Coinbase Tx")}</Text>
+                  <Typography.Text strong>{t("EditCoinbaseTx", "Edit Coinbase Tx")}</Typography.Text>
                   <Input addonBefore={t("To")}
                     value={ editingCoinbaseState[selectedBlockInfo.block.id]?.to ?? selectedBlockInfo.block.coinbase.to }
                     onChange={(e) => handleCoinbaseInputChange("to", e.target.value)}
@@ -674,7 +674,7 @@ const CoinbasePage: NextPage = () => {
             )}
             {Array.isArray(selectedBlockInfo.block.data) && selectedBlockInfo.block.data.length > 0 && (
               <Card size="small" key={`${selectedBlockInfo.block.id}-p2p-edit-modal`} style={{ marginTop: "5px", backgroundColor: "#f0f0f0" }}>
-                <Text strong>{t("EditP2PTxs", "Edit P2P Txs")}</Text>
+                <Typography.Text strong>{t("EditP2PTxs", "Edit P2P Txs")}</Typography.Text>
                 {selectedBlockInfo.block.data.map((tx, txIndex) => (
                   <Space direction="vertical" key={tx.id} style={{ width: "100%", marginTop: "5px", paddingTop: "5px", borderTop: "1px dashed #ccc" }} data-p2p-tx-index={txIndex}>
                     <Input addonBefore={t("From")}
