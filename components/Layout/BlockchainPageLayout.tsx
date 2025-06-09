@@ -68,7 +68,6 @@ const BlockchainPageLayout: React.FC<BlockchainPageLayoutProps> = (props) => {
                 isLoading={theoryIsLoading}
                 error={theoryError}
                 className="tutorial-content-markdown" // Ensure this class provides necessary styling
-                loadingMessage={t('LoadingTheory', 'Loading theory...')}
                 errorMessagePrefix={t('ErrorLoadingTheoryPrefix', 'Error loading content:')}
               />
             </div>

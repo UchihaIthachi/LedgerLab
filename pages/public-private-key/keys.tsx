@@ -3,8 +3,10 @@ import { NextPage } from 'next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
-import { Form, Input, Button, Row, Col, Typography, Alert } from 'antd';
+import { Form, Input, Button, Row, Col, Typography, Alert, Space } from 'antd';
 import EC from 'elliptic';
+import CopyableText from '@/components/Common/CopyableText';
+import GlossaryTerm from '@/components/Common/GlossaryTerm'; // Import GlossaryTerm
 
 const { Title, Paragraph } = Typography;
 const ec = new EC.ec('secp256k1');
@@ -65,7 +67,11 @@ const KeysPage: NextPage = () => {
       <div>
         <Title level={2}>{t('KeysPageTitle', 'Generate Public/Private Key Pair')}</Title>
         <Paragraph>
-          {t('KeysPageDescription', 'A private key is a secret number that allows you to send your cryptocurrency. A public key is derived from it and is what you share with others to receive funds. This uses elliptic curve cryptography (secp256k1), the same used by Bitcoin.')}
+          {t('KeysPageDescription_part1', 'A ')}
+          <GlossaryTerm termKey="private_key" />
+          {t('KeysPageDescription_part2', ' is a secret number that allows you to send your cryptocurrency. A ')}
+          <GlossaryTerm termKey="public_key" />
+          {t('KeysPageDescription_part3', ' is derived from it and is what you share with others to receive funds. This uses elliptic curve cryptography (secp256k1), the same used by Bitcoin.')}
         </Paragraph>
 
         <Row gutter={[16, 16]}>
@@ -78,6 +84,11 @@ const KeysPage: NextPage = () => {
                   onChange={handlePrivateKeyInputChange}
                   placeholder={t('EnterPrivateKeyPlaceholder', 'Enter a hex private key or generate one')}
                 />
+                {privateKeyInput && (
+                  <div style={{ marginTop: '8px' }}>
+                    <CopyableText textToCopy={privateKeyInput} />
+                  </div>
+                )}
               </Form.Item>
               <Form.Item>
                 <Button type="primary" onClick={generateNewKey} block>
@@ -89,12 +100,13 @@ const KeysPage: NextPage = () => {
           <Col xs={24} md={12}>
             <Form layout="vertical">
               <Form.Item label={t('PublicKey', 'Public Key')}>
-                <Input.TextArea
-                  rows={4}
-                  value={publicKeyDisplay}
-                  readOnly
-                  placeholder={t('PublicKeyDisplayPlaceholder', 'Public key will be displayed here')}
-                />
+                {publicKeyDisplay ? (
+                  <CopyableText textToCopy={publicKeyDisplay} displayText={publicKeyDisplay} />
+                ) : (
+                  <Typography.Text type="secondary">
+                    {t('PublicKeyDisplayPlaceholder', 'Public key will be displayed here')}
+                  </Typography.Text>
+                )}
               </Form.Item>
             </Form>
           </Col>

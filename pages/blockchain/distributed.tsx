@@ -44,6 +44,8 @@ const DistributedPage: NextPage = () => {
   const router = useRouter();
   const [peers, setPeers] = useState<Peer[]>([]);
   const [miningStates, setMiningStates] = useState<{ [key: string]: boolean }>({});
+  const [currentMiningPeerAttemptNonce, setCurrentMiningPeerAttemptNonce] = useState<number | null>(null);
+  const [currentMiningPeerAttemptHash, setCurrentMiningPeerAttemptHash] = useState<string | null>(null);
 
   interface SelectedBlockInfo { peerId: string; block: BlockType; }
   const [selectedBlockInfo, setSelectedBlockInfo] = useState<SelectedBlockInfo | null>(null);
@@ -95,6 +97,8 @@ const DistributedPage: NextPage = () => {
   const handleModalClose = useCallback(() => {
     setIsModalVisible(false);
     setSelectedBlockInfo(null);
+    setCurrentMiningPeerAttemptNonce(null); // Clear attempts on modal close
+    setCurrentMiningPeerAttemptHash(null);
   }, []);
 
   const handleDataChangeInModal = useCallback((newData: string) => {
@@ -142,18 +146,26 @@ const DistributedPage: NextPage = () => {
     if (!selectedBlockInfo) return;
     const { peerId, block: blockToMine } = selectedBlockInfo;
     const miningKey = `${peerId}-${blockToMine.id}`;
+
     setMiningStates(prev => ({ ...prev, [miningKey]: true }));
-    await new Promise(resolve => setTimeout(resolve, 50));
+    setCurrentMiningPeerAttemptNonce(0); // Initialize
+    setCurrentMiningPeerAttemptHash(calculateHash(blockToMine.blockNumber, 0, blockToMine.data, blockToMine.previousHash, undefined));
+    await new Promise(resolve => setTimeout(resolve, 50)); // UI update
 
     let foundNonce = blockToMine.nonce;
     for (let i = 0; i <= MAX_NONCE; i++) {
-      const hash = calculateHash(
+      const hashAttempt = calculateHash(
         blockToMine.blockNumber, i,
         blockToMine.data,
         blockToMine.previousHash,
-        undefined
+        undefined // No coinbase for generic blocks
       );
-      if (checkValidity(hash)) {
+      if (i % 200 === 0) { // Update UI periodically
+        setCurrentMiningPeerAttemptNonce(i);
+        setCurrentMiningPeerAttemptHash(hashAttempt);
+        await new Promise(resolve => setTimeout(resolve, 0)); // Yield
+      }
+      if (checkValidity(hashAttempt)) {
         foundNonce = i;
         break;
       }
@@ -174,6 +186,8 @@ const DistributedPage: NextPage = () => {
       return p;
     }));
     setMiningStates(prev => ({ ...prev, [miningKey]: false }));
+    setCurrentMiningPeerAttemptNonce(null); // Clear after mining
+    setCurrentMiningPeerAttemptHash(null);
   }, [selectedBlockInfo]);
 
   const addBlockToPeerChain = useCallback((pId: string) => {
@@ -326,6 +340,8 @@ const DistributedPage: NextPage = () => {
           onClose={handleModalClose}
           selectedBlockInfo={selectedBlockInfo}
           miningState={miningStates[`${selectedBlockInfo.peerId}-${selectedBlockInfo.block.id}`] || false}
+          miningAttemptNonce={currentMiningPeerAttemptNonce ?? undefined}
+          miningAttemptHash={currentMiningPeerAttemptHash ?? undefined}
           onMine={handleMineInModal}
           onNonceChange={handleNonceChangeInModal}
           blockDataType="simple_text"

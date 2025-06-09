@@ -24,6 +24,8 @@ export interface BlockDetailModalProps {
   onApplyP2PTxChanges?: (txId: string) => void;
   editingCoinbaseState?: { [blockId: string]: Partial<CoinbaseTransactionType> }; // blockId here is the actual block.id
   onApplyCoinbaseChanges?: () => void;
+  miningAttemptNonce?: number;
+  miningAttemptHash?: string;
 }
 
 const BlockDetailModal: React.FC<BlockDetailModalProps> = (props) => {
@@ -43,6 +45,8 @@ const BlockDetailModal: React.FC<BlockDetailModalProps> = (props) => {
     onApplyP2PTxChanges,
     editingCoinbaseState = {}, // Default to empty object
     onApplyCoinbaseChanges,
+    miningAttemptNonce,
+    miningAttemptHash,
   } = props;
 
   if (!selectedBlockInfo) {
@@ -81,6 +85,8 @@ const BlockDetailModal: React.FC<BlockDetailModalProps> = (props) => {
         onMine={onMine}
         isMining={miningState}
         isFirstBlock={block.blockNumber === 1}
+        miningAttemptNonce={miningAttemptNonce}
+        miningAttemptHash={miningAttemptHash}
       />
 
       {blockDataType === 'transactions_with_coinbase' && block.coinbase && onCoinbaseChange && (

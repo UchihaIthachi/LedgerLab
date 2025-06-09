@@ -19,6 +19,8 @@ const BlockPage: NextPage = () => {
   const [currentHash, setCurrentHash] = useState<string>('');
   const [isValid, setIsValid] = useState<boolean>(false);
   const [isMining, setIsMining] = useState<boolean>(false);
+  const [miningAttemptNonce, setMiningAttemptNonce] = useState<number | null>(null);
+  const [miningAttemptHash, setMiningAttemptHash] = useState<string | null>(null);
 
   // Memoized hash calculation using the utility function
   const memoizedCalculateHash = useCallback((currentNonce: number, currentData: string) => {
@@ -41,6 +43,8 @@ const BlockPage: NextPage = () => {
 
   const handleMine = useCallback(async () => {
     setIsMining(true);
+    setMiningAttemptNonce(0); // Initialize
+    setMiningAttemptHash(calculateHash(blockNumber, 0, data, previousHash)); // Initial hash attempt
     await new Promise(resolve => setTimeout(resolve, 0)); // Allow UI update
 
     let newNonceAttempt = 0;
@@ -48,17 +52,22 @@ const BlockPage: NextPage = () => {
       const hash = calculateHash(blockNumber, newNonceAttempt, data, previousHash);
       if (checkValidity(hash)) {
         setNonce(newNonceAttempt);
-        // setCurrentHash(hash); // Will be updated by useEffect
-        // setIsValid(true);  // Will be updated by useEffect
         setIsMining(false);
+        setMiningAttemptNonce(null); // Clear on success
+        setMiningAttemptHash(null);  // Clear on success
         return;
       }
-      if (newNonceAttempt % 2000 === 0) { // Yield more sparsely
-        await new Promise(resolve => setTimeout(resolve, 0));
+      // Update progress periodically
+      if (newNonceAttempt % 200 === 0) { // Update UI more frequently for attempts
+        setMiningAttemptNonce(newNonceAttempt);
+        setMiningAttemptHash(hash);
+        await new Promise(resolve => setTimeout(resolve, 0)); // Yield to update UI
       }
       newNonceAttempt++;
     }
     setIsMining(false);
+    setMiningAttemptNonce(null); // Clear if not found
+    setMiningAttemptHash(null);  // Clear if not found
   }, [blockNumber, data, previousHash]); // Dependencies for mining logic
 
 
@@ -83,6 +92,8 @@ const BlockPage: NextPage = () => {
               onMine={handleMine}
               isMining={isMining}
               isFirstBlock={true}
+              miningAttemptNonce={miningAttemptNonce ?? undefined} // Pass as undefined if null
+              miningAttemptHash={miningAttemptHash ?? undefined}   // Pass as undefined if null
             />
           </Col>
         </Row>

@@ -7,6 +7,7 @@ import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { Card, Row, Col, Typography, theme } from 'antd'; // Added theme
 import { AppstoreOutlined, KeyOutlined, LockOutlined } from '@ant-design/icons'; // Using LockOutlined for ZKP
 import { motion } from 'framer-motion';
+import GlossaryTerm from '@/components/Common/GlossaryTerm'; // Import GlossaryTerm
 
 const { Title, Paragraph } = Typography;
 
@@ -86,7 +87,9 @@ export default function Home(_props: InferGetStaticPropsType<typeof getStaticPro
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <Paragraph style={{ fontSize: '18px', maxWidth: '700px', margin: '0 auto' }}>
-              {t('HomePageIntro', 'Explore various blockchain concepts through our interactive demonstrations. Click on a card below to get started!')}
+              {t('HomePageIntro_part1', 'Explore various ')}
+              <GlossaryTerm termKey="blockchain" />
+              {t('HomePageIntro_part2', ' concepts through our interactive demonstrations. Click on a card below to get started!')}
             </Paragraph>
           </motion.div>
         </div>

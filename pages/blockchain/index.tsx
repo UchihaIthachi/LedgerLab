@@ -31,6 +31,7 @@ const BlockchainIndexPage: NextPage = () => {
     updateBlockNonce,
     mineBlock,
     removeBlock,
+    miningAttempts, // Destructure miningAttempts
   } = useSimpleChain();
 
   const {
@@ -209,6 +210,8 @@ const BlockchainIndexPage: NextPage = () => {
           onClose={closeModal}
           selectedBlockInfo={selectedBlockForModal ? { block: selectedBlockForModal } : null}
           miningState={selectedBlockForModal ? (miningStates[selectedBlockForModal.id] || false) : false}
+          miningAttemptNonce={selectedBlockForModal ? miningAttempts[selectedBlockForModal.id]?.nonce : undefined}
+          miningAttemptHash={selectedBlockForModal ? miningAttempts[selectedBlockForModal.id]?.hash : undefined}
           onMine={() => selectedBlockForModal && handleMineInModal(selectedBlockForModal.id)}
           onNonceChange={(value) => selectedBlockForModal && handleNonceChangeInModal(selectedBlockForModal.id, value)}
           onSimpleDataChange={(newData) => selectedBlockForModal && handleDataChangeInModal(selectedBlockForModal.id, newData)}

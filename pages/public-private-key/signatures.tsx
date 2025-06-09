@@ -3,9 +3,11 @@ import { NextPage } from 'next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
-import { Form, Input, Button, Row, Col, Typography, Alert, Tabs } from 'antd';
+import { Form, Input, Button, Row, Col, Typography, Alert, Tabs, Space } from 'antd';
 import EC from 'elliptic';
 import CryptoJS from 'crypto-js'; // crypto-js is already a dependency from blockchain part
+import CopyableText from '@/components/Common/CopyableText';
+import GlossaryTerm from '@/components/Common/GlossaryTerm'; // Import GlossaryTerm
 
 const { Title, Paragraph } = Typography;
 const ec = new EC.ec('secp256k1');
@@ -103,13 +105,24 @@ const SignaturesPage: NextPage = () => {
           </Form.Item>
           <Form.Item label={t('PrivateKeyForSigning', 'Your Private Key')}>
             <Input.TextArea rows={3} value={signPrivateKey} onChange={e => setSignPrivateKey(e.target.value)} />
+            {signPrivateKey && (
+              <div style={{ marginTop: '8px' }}>
+                <CopyableText textToCopy={signPrivateKey} />
+              </div>
+            )}
           </Form.Item>
           <Form.Item>
             <Button type="primary" onClick={handleSignMessage} block>{t('SignTheMessage', 'Sign Message')}</Button>
           </Form.Item>
           {signError && <Alert message={signError} type="error" showIcon style={{ marginBottom: '16px' }} />}
           <Form.Item label={t('GeneratedSignature', 'Generated Signature (Hex DER)')}>
-            <Input.TextArea rows={3} value={generatedSignature} readOnly />
+            {generatedSignature ? (
+              <CopyableText textToCopy={generatedSignature} displayText={generatedSignature} />
+            ) : (
+              <Typography.Text type="secondary">
+                {t('SignatureDisplayPlaceholder', 'Signature will appear here')}
+              </Typography.Text>
+            )}
           </Form.Item>
         </Form>
       )
@@ -124,9 +137,19 @@ const SignaturesPage: NextPage = () => {
           </Form.Item>
           <Form.Item label={t('SenderPublicKey', "Sender's Public Key (Hex)")}>
             <Input.TextArea rows={3} value={verifyPublicKey} onChange={e => setVerifyPublicKey(e.target.value)} />
+            {verifyPublicKey && (
+              <div style={{ marginTop: '8px' }}>
+                <CopyableText textToCopy={verifyPublicKey} />
+              </div>
+            )}
           </Form.Item>
           <Form.Item label={t('SignatureToVerify', 'Signature to Verify (Hex DER)')}>
             <Input.TextArea rows={3} value={verifySignatureInput} onChange={e => setVerifySignatureInput(e.target.value)} />
+            {verifySignatureInput && (
+              <div style={{ marginTop: '8px' }}>
+                <CopyableText textToCopy={verifySignatureInput} />
+              </div>
+            )}
           </Form.Item>
           <Form.Item>
             <Button type="primary" onClick={handleVerifySignature} block>{t('VerifyTheSignature', 'Verify Signature')}</Button>
@@ -146,7 +169,13 @@ const SignaturesPage: NextPage = () => {
       <div>
         <Title level={2}>{t('SignaturesPageTitle', 'Create & Verify Digital Signatures')}</Title>
         <Paragraph>
-          {t('SignaturesPageDescription', 'Digital signatures allow you to verify the author of a message and that it has not been tampered with. Signing uses a private key, while verification uses the corresponding public key.')}
+          {t('SignaturesPageDescription_part1', '')}
+          <GlossaryTerm termKey="digital_signature" />
+          {t('SignaturesPageDescription_part2', ' allow you to verify the author of a message and that it has not been tampered with. Signing uses a ')}
+          <GlossaryTerm termKey="private_key" />
+          {t('SignaturesPageDescription_part3', ', while verification uses the corresponding ')}
+          <GlossaryTerm termKey="public_key" />
+          {t('SignaturesPageDescription_part4', '.')}
         </Paragraph>
         <Tabs defaultActiveKey="sign" items={tabItems} />
       </div>

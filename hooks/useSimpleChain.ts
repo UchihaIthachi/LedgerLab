@@ -33,6 +33,7 @@ export interface UseSimpleChainConfig {
 export interface UseSimpleChainReturn {
   chain: BlockType[];
   miningStates: { [blockId: string]: boolean };
+  miningAttempts: { [blockId: string]: { nonce: number, hash: string } };
   initializeChain: (config?: UseSimpleChainConfig) => void;
   addBlock: () => void;
   resetChain: (config?: UseSimpleChainConfig) => void;
@@ -45,6 +46,7 @@ export interface UseSimpleChainReturn {
 const useSimpleChain = (defaultConfig?: UseSimpleChainConfig): UseSimpleChainReturn => {
   const [chain, setChain] = useState<BlockType[]>([]);
   const [miningStates, setMiningStates] = useState<{ [blockId: string]: boolean }>({});
+  const [miningAttempts, setMiningAttempts] = useState<{ [blockId: string]: { nonce: number, hash: string } }>({});
 
   const initializeOrResetChain = useCallback((config?: UseSimpleChainConfig) => {
     const conf = config || defaultConfig || { initialLength: 3 };
@@ -71,6 +73,7 @@ const useSimpleChain = (defaultConfig?: UseSimpleChainConfig): UseSimpleChainRet
     }
     setChain(newChain);
     setMiningStates({});
+    setMiningAttempts({});
   }, [defaultConfig]);
 
   const initializeChain = useCallback((config?: UseSimpleChainConfig) => {
@@ -121,14 +124,21 @@ const useSimpleChain = (defaultConfig?: UseSimpleChainConfig): UseSimpleChainRet
 
   const mineBlock = useCallback(async (blockId: string) => {
     setMiningStates(prev => ({ ...prev, [blockId]: true }));
-    await new Promise(resolve => setTimeout(resolve, 0));
+
+    // Initialize mining attempt for this blockId
+    const initialBlockState = chain.find(b => b.id === blockId);
+    if (initialBlockState) {
+      const initialHash = calculateHash(initialBlockState.blockNumber, 0, initialBlockState.data as string, initialBlockState.previousHash);
+      setMiningAttempts(prev => ({ ...prev, [blockId]: { nonce: 0, hash: initialHash } }));
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 0)); // UI update for mining start
 
     setChain((prevChain) => {
       const blockIndex = prevChain.findIndex((b) => b.id === blockId);
       if (blockIndex === -1) {
-        setMiningStates(prev => {
-          const newState = {...prev}; delete newState[blockId]; return newState;
-        });
+        setMiningStates(prev => { const ns = { ...prev }; delete ns[blockId]; return ns; });
+        setMiningAttempts(prev => { const na = { ...prev }; delete na[blockId]; return na; });
         return prevChain;
       }
 
@@ -137,20 +147,23 @@ const useSimpleChain = (defaultConfig?: UseSimpleChainConfig): UseSimpleChainRet
       let foundNonce = blockToMine.nonce;
 
       for (let i = 0; i <= MAX_NONCE; i++) {
-        const hash = calculateHash(blockToMine.blockNumber, i, blockToMine.data as string, blockToMine.previousHash);
-        if (checkValidity(hash)) {
+        const currentHashAttempt = calculateHash(blockToMine.blockNumber, i, blockToMine.data as string, blockToMine.previousHash);
+        if (i % 200 === 0) { // Update attempts periodically
+          setMiningAttempts(prev => ({ ...prev, [blockId]: { nonce: i, hash: currentHashAttempt } }));
+          // Consider adding a small delay here if UI struggles, but setTimeout(0) might be enough
+        }
+        if (checkValidity(currentHashAttempt)) {
           foundNonce = i;
           break;
         }
       }
       newChain[blockIndex].nonce = foundNonce;
       const finalChain = updateChainCascadingInternal(newChain, blockIndex);
-      setMiningStates(prev => {
-        const newState = {...prev}; delete newState[blockId]; return newState;
-      });
+      setMiningStates(prev => { const ns = { ...prev }; delete ns[blockId]; return ns; });
+      setMiningAttempts(prev => { const na = { ...prev }; delete na[blockId]; return na; });
       return finalChain;
     });
-  }, []);
+  }, [chain]); // Added chain to dependencies as it's used for initialBlockState
 
   const removeBlock = useCallback((blockIdToRemove: string) => {
     setChain(prevChain => {
@@ -183,6 +196,7 @@ const useSimpleChain = (defaultConfig?: UseSimpleChainConfig): UseSimpleChainRet
   return {
     chain,
     miningStates,
+    miningAttempts,
     initializeChain,
     addBlock,
     resetChain,

@@ -1,8 +1,10 @@
 import React from 'react';
-import { Card, Form, Input, Button, InputNumber, Descriptions, Typography, Divider, theme } from 'antd';
+import { Card, Form, Input, Button, InputNumber, Descriptions, Typography, Divider, theme, Empty } from 'antd';
 import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons'; // Import icons for title
 import { useTranslation } from 'next-i18next';
 import { TransactionType, CoinbaseTransactionType } from '@/lib/blockchainUtils';
+import CopyableText from '@/components/Common/CopyableText'; // Import the new component
+import GlossaryTerm from '@/components/Common/GlossaryTerm'; // Import GlossaryTerm
 
 // const { Text } = Typography; // Remove this line
 
@@ -22,6 +24,8 @@ interface BlockCardProps {
   isFirstBlock?: boolean;
   // For coinbase editing, if implemented on parent page:
   onCoinbaseFieldChange?: (field: keyof CoinbaseTransactionType, value: string) => void;
+  miningAttemptNonce?: number;
+  miningAttemptHash?: string;
 }
 
 const BlockCard: React.FC<BlockCardProps> = ({
@@ -39,6 +43,8 @@ const BlockCard: React.FC<BlockCardProps> = ({
   isMining,
   isFirstBlock = false,
   onCoinbaseFieldChange, // Placeholder
+  miningAttemptNonce,
+  miningAttemptHash,
 }) => {
   const { t } = useTranslation('common');
   const { token } = theme.useToken(); // Get theme tokens
@@ -69,10 +75,12 @@ const BlockCard: React.FC<BlockCardProps> = ({
     if (!coinbase) return null;
     return (
       <>
-        <Form.Item label={t('CoinbaseTransaction', 'Coinbase Transaction')}>
+        <Form.Item label={<GlossaryTerm termKey="coinbase_transaction" />}>
           <Card size="small" type="inner">
-            <Descriptions bordered column={1} size="small">
-              <Descriptions.Item label={t('To', 'To')}>{coinbase.to}</Descriptions.Item>
+            <Descriptions bordered column={1} size="small" style={{ wordBreak: 'break-all' }}>
+              <Descriptions.Item label={t('To', 'To')}>
+                <CopyableText textToCopy={coinbase.to} displayText={coinbase.to} />
+              </Descriptions.Item>
               <Descriptions.Item label={t('Value', 'Value (Minted)')}>
                 {(coinbase.value ?? '0').toString()}
               </Descriptions.Item>
@@ -94,17 +102,29 @@ const BlockCard: React.FC<BlockCardProps> = ({
   const renderDataSection = () => {
     if (dataType === 'transactions' && Array.isArray(data)) {
       return (
-        <Form.Item label={t('P2PTransactions', 'P2P Transactions')}>
-          {data.length === 0 ? <Typography.Text italic>{t('NoTransactions', '(No transactions)')}</Typography.Text> : null}
-          {data.map((tx, index) => (
-            <Card key={tx.id || index} size="small" style={{ marginTop: index > 0 ? '10px' : '0' }} type="inner">
-              <Descriptions bordered column={1} size="small">
-                <Descriptions.Item label={t('From', 'From')}>{tx.from}</Descriptions.Item>
-                <Descriptions.Item label={t('To', 'To')}>{tx.to}</Descriptions.Item>
-                <Descriptions.Item label={t('Value', 'Value')}>{tx.value.toString()}</Descriptions.Item>
-              </Descriptions>
-            </Card>
-          ))}
+        <Form.Item label={<GlossaryTerm termKey="transaction">{t('P2PTransactions', 'P2P Transactions')}</GlossaryTerm>}>
+          {data.length === 0 ? (
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('NoTransactionsInBlock')} />
+          ) : (
+            data.map((tx, index) => (
+              <Card key={tx.id || index} size="small" style={{ marginTop: index > 0 ? '10px' : '0' }} type="inner">
+                <Descriptions bordered column={1} size="small" style={{ wordBreak: 'break-all' }}>
+                  {tx.id && (
+                    <Descriptions.Item label={t('TransactionID', 'ID')}>
+                      <CopyableText textToCopy={tx.id} displayText={`${tx.id.substring(0, 6)}...${tx.id.substring(tx.id.length - 4)}`} />
+                    </Descriptions.Item>
+                  )}
+                  <Descriptions.Item label={t('From', 'From')}>
+                    <CopyableText textToCopy={tx.from} displayText={tx.from} />
+                  </Descriptions.Item>
+                  <Descriptions.Item label={t('To', 'To')}>
+                    <CopyableText textToCopy={tx.to} displayText={tx.to} />
+                  </Descriptions.Item>
+                  <Descriptions.Item label={t('Value', 'Value')}>{tx.value.toString()}</Descriptions.Item>
+                </Descriptions>
+              </Card>
+            ))
+          )}
         </Form.Item>
       );
     }
@@ -141,10 +161,10 @@ const BlockCard: React.FC<BlockCardProps> = ({
       // styles={{ body: cardBodyStyle }} prop removed
     >
       <Form form={form} layout="vertical">
-        <Form.Item label={t('BlockNumberLabel', 'Block #')} name="blockNumber">
+        <Form.Item label={<><GlossaryTerm termKey="block" /> #</>} name="blockNumber">
           <InputNumber readOnly style={{ width: '100%' }} />
         </Form.Item>
-        <Form.Item label={t('Nonce')} name="nonce">
+        <Form.Item label={<GlossaryTerm termKey="nonce" />} name="nonce">
           <InputNumber
             value={nonce}
             onChange={onNonceChange}
@@ -152,13 +172,27 @@ const BlockCard: React.FC<BlockCardProps> = ({
             min={0}
           />
         </Form.Item>
+        {isMining && miningAttemptNonce !== undefined && (
+          <div style={{ marginBottom: '16px', padding: '8px', border: `1px solid ${token.colorBorder}`, borderRadius: token.borderRadiusLG, background: token.colorBgContainerDisabled }}>
+            <Typography.Text style={{ display: 'block' }}>
+              {t('TryingNonce', 'Trying Nonce')}: {miningAttemptNonce}
+            </Typography.Text>
+            <Typography.Text style={{ display: 'block', wordBreak: 'break-all' }}>
+              {t('CurrentHashAttempt', 'Current Hash Attempt')}: {miningAttemptHash || '...'}
+            </Typography.Text>
+          </div>
+        )}
         {renderCoinbaseSection()}
         {renderDataSection()}
-        <Form.Item label={t('Prev')} name="previousHash">
-          <Input readOnly disabled={isFirstBlock && previousHash === "0".repeat(64)} />
+        <Form.Item label={<GlossaryTerm termKey="previous_hash" />} name="previousHash">
+          {isFirstBlock && previousHash === "0".repeat(64) ? (
+            <Input readOnly disabled value="0000000000000000000000000000000000000000000000000000000000000000 (Genesis Block)" />
+          ) : (
+            <CopyableText textToCopy={previousHash} displayText={previousHash} />
+          )}
         </Form.Item>
-        <Form.Item label={t('Hash')} name="currentHash">
-          <Input readOnly />
+        <Form.Item label={<GlossaryTerm termKey="hash" />} name="currentHash">
+          <CopyableText textToCopy={currentHash} displayText={currentHash} />
         </Form.Item>
         <Form.Item>
           <Button

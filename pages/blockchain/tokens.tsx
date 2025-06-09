@@ -65,6 +65,8 @@ const TokensPage: NextPage = () => {
   const [peers, setPeers] = useState<Peer[]>([]);
   const [miningStates, setMiningStates] = useState<{ [key: string]: boolean }>({});
   const [editingTxState, setEditingTxState] = useState<{ [txId: string]: Partial<TransactionType> }>({});
+  const [currentMiningPeerAttemptNonce, setCurrentMiningPeerAttemptNonce] = useState<number | null>(null);
+  const [currentMiningPeerAttemptHash, setCurrentMiningPeerAttemptHash] = useState<string | null>(null);
 
   interface SelectedBlockInfo { peerId: string; block: BlockType; }
   const [selectedBlockInfo, setSelectedBlockInfo] = useState<SelectedBlockInfo | null>(null);
@@ -145,6 +147,8 @@ const TokensPage: NextPage = () => {
   const handleModalClose = useCallback(() => {
     setIsModalVisible(false);
     setSelectedBlockInfo(null);
+    setCurrentMiningPeerAttemptNonce(null); // Clear attempts on modal close
+    setCurrentMiningPeerAttemptHash(null);
   }, []);
 
   const handleNonceChangeInModal = useCallback((newNonceValue: string | number | null | undefined) => {
@@ -169,18 +173,26 @@ const TokensPage: NextPage = () => {
     if (!selectedBlockInfo) return;
     const { peerId, block: blockToMine } = selectedBlockInfo;
     const miningKey = `${peerId}-${blockToMine.id}`;
+
     setMiningStates(prev => ({ ...prev, [miningKey]: true }));
-    await new Promise(resolve => setTimeout(resolve, 50));
+    setCurrentMiningPeerAttemptNonce(0); // Initialize
+    setCurrentMiningPeerAttemptHash(calculateHash(blockToMine.blockNumber, 0, blockToMine.data, blockToMine.previousHash, blockToMine.coinbase));
+    await new Promise(resolve => setTimeout(resolve, 50)); // UI update
 
     let foundNonce = blockToMine.nonce;
     for (let i = 0; i <= MAX_NONCE; i++) {
-      const hash = calculateHash(
+      const hashAttempt = calculateHash(
         blockToMine.blockNumber, i,
         blockToMine.data,
         blockToMine.previousHash,
         blockToMine.coinbase
       );
-      if (checkValidity(hash)) { foundNonce = i; break; }
+      if (i % 200 === 0) { // Update UI periodically
+        setCurrentMiningPeerAttemptNonce(i);
+        setCurrentMiningPeerAttemptHash(hashAttempt);
+        await new Promise(resolve => setTimeout(resolve, 0)); // Yield
+      }
+      if (checkValidity(hashAttempt)) { foundNonce = i; break; }
     }
     setPeers(prevPeers => prevPeers.map(p => {
       if (p.peerId === peerId) {
@@ -195,6 +207,8 @@ const TokensPage: NextPage = () => {
       return p;
     }));
     setMiningStates(prev => ({ ...prev, [miningKey]: false }));
+    setCurrentMiningPeerAttemptNonce(null); // Clear after mining
+    setCurrentMiningPeerAttemptHash(null);
   }, [selectedBlockInfo]);
 
   const handleP2PTransactionChangeInModal = useCallback((txInternalId: string, fieldToChange: keyof TransactionType, newValue: any) => {
@@ -386,6 +400,8 @@ const TokensPage: NextPage = () => {
           onClose={handleModalClose}
           selectedBlockInfo={selectedBlockInfo}
           miningState={miningStates[`${selectedBlockInfo.peerId}-${selectedBlockInfo.block.id}`] || false}
+          miningAttemptNonce={currentMiningPeerAttemptNonce ?? undefined}
+          miningAttemptHash={currentMiningPeerAttemptHash ?? undefined}
           onMine={handleMineInModal}
           onNonceChange={handleNonceChangeInModal}
           blockDataType="transactions_only"

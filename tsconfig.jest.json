@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx", // or "react", depending on your setup
+    "esModuleInterop": true,
+    "module": "commonjs" // Jest typically prefers CommonJS modules
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.test.ts", // Include test files
+    "**/*.test.tsx", // Include test files
+    "jest.config.js", // Include Jest config if it's JS for some reason (though ours is ts)
+    "jest.setup.js", // Include setup file
+    "__mocks__/**/*.js", // Include mocks
+    "__mocks__/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
