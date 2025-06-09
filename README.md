@@ -1,48 +1,95 @@
-# LedgerLab
+# ⚙️ LedgerLab
 
-LedgerLab is an interactive educational tool demonstrating blockchain concepts, built with [Next.js](https://nextjs.org/). This project was originally bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+**LedgerLab** is an interactive, educational platform that visually demonstrates core blockchain and cryptographic concepts through hands-on simulations. Built with [Next.js](https://nextjs.org/) and TypeScript, it helps users understand how blockchains work — from mining and immutability to digital signatures and zero-knowledge proofs.
 
-## Getting Started
+Inspired by [Anders Brownworth’s blockchain demo](https://anders.com/blockchain/), this modernized version includes an expanded set of cryptographic modules, improved UI/UX, and a developer-friendly architecture for experimentation and learning.
 
-First, run the development server:
+---
+
+## ✨ Features
+
+- ⛓️ **Blockchain Explorer** – Interact with a chain of blocks and learn about hashing, nonces, and immutability.
+- 🧮 **Mining Simulator** – Visualize how Proof-of-Work is used to validate blocks.
+- 🔐 **Key Generation** – Generate public/private key pairs using elliptic curve cryptography (`secp256k1`).
+- ✍️ **Digital Signatures** – Sign messages and transactions, and verify them using public keys.
+- 🕵️ **Zero-Knowledge Proofs (ZKP)** – Use the map-coloring game to explore knowledge proofs without revealing information.
+- 🔁 **Distributed Ledger View** – See how tampering in one peer's chain leads to consensus breakdown.
+
+---
+
+## 🚀 Getting Started
+
+Clone the repository and start the development server:
 
 ```bash
+npm install
 npm run dev
 # or
-yarn dev
+# yarn dev
 # or
-pnpm dev
+# pnpm dev
 # or
-bun dev
+# bun dev
 ```
+Visit: http://localhost:3000
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🧪 Explore the Modules
+| Path                             | Description                                                    |
+| -------------------------------- | -------------------------------------------------------------- |
+| `/blockchain/block`              | View and modify a single block’s data and nonce                |
+| `/blockchain`                    | Explore a linked series of blocks (a blockchain)               |
+| `/blockchain/distributed`        | Simulate blockchains across multiple peers                     |
+| `/blockchain/tokens`             | Visualize simple token-based transactions                      |
+| `/blockchain/coinbase`           | Learn how coinbase transactions mint new tokens                |
+| `/public-private-key/keys`       | Generate ECC-based key pairs                                   |
+| `/public-private-key/signatures` | Sign and verify messages using keys                            |
+| `/public-private-key/transaction`| Simulate cryptographic blockchain transactions                 |
+| `/zero-knowledge-proof`          | Play with zero-knowledge proofs using map coloring             |
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+---
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+## 🧱 Tech Stack
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+- **Next.js** – React-based frontend framework
+- **TypeScript** – Static typing for JavaScript
+- **Ant Design** – UI component library
+- **Framer Motion** – Animation library
+- **react-simple-maps** – Library for map visualizations
+- **elliptic.js** – ECC crypto library
+- **crypto-js** – Hashing library (includes SHA256)
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+---
 
-## Learn More
+## 📦 Deployment
 
-To learn more about Next.js, take a look at the following resources:
+This project is optimized for deployment on [Vercel](https://vercel.com/).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## 🤝 Contributing (Example)
 
-## Acknowledgements
+Contributions are welcome! Please follow these steps:
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
 
-This project is inspired by and builds upon the foundational work of Anders Brownworth, particularly his original blockchain demonstration.
+---
+
+## 🙏 Acknowledgements
+
+This project is inspired by and builds upon the foundational work of Anders Brownworth, particularly his original [blockchain demonstration](https://anders.com/blockchain/).
 
 Further development, modernization, and contributions by Harhana Lakshara Fernando.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📘 Learn More
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- [Blockchain (Wikipedia)](https://en.wikipedia.org/wiki/Blockchain)
+- [Public-Key Cryptography](https://en.wikipedia.org/wiki/Public-key_cryptography)
+- [Digital Signatures](https://en.wikipedia.org/wiki/Digital_signature)
+- [Zero-Knowledge Proof](https://en.wikipedia.org/wiki/Zero-knowledge_proof)
+
+💡 Ideal for students, educators, and developers learning how blockchain works at a fundamental level.
