@@ -2,7 +2,7 @@
 
 **LedgerLab** is an interactive, educational platform that visually demonstrates core blockchain and cryptographic concepts through hands-on simulations. Built with [Next.js](https://nextjs.org/) and TypeScript, it helps users understand how blockchains work — from mining and immutability to digital signatures and zero-knowledge proofs.
 
-Inspired by [Anders Brownworth’s blockchain demo](https://anders.com/blockchain/), this modernized version includes an expanded set of cryptographic modules, improved UI/UX, and a developer-friendly architecture for experimentation and learning.
+Inspired by [Anders Brownworth’s blockchain demo](https://andersbrownworth.com/blockchain), this modernized version includes an expanded set of cryptographic modules, improved UI/UX, and a developer-friendly architecture for experimentation and learning.
 
 ---
 
@@ -31,20 +31,22 @@ npm run dev
 # or
 # bun dev
 ```
+
 Visit: http://localhost:3000
 
 ### 🧪 Explore the Modules
-| Path                             | Description                                                    |
-| -------------------------------- | -------------------------------------------------------------- |
-| `/blockchain/block`              | View and modify a single block’s data and nonce                |
-| `/blockchain`                    | Explore a linked series of blocks (a blockchain)               |
-| `/blockchain/distributed`        | Simulate blockchains across multiple peers                     |
-| `/blockchain/tokens`             | Visualize simple token-based transactions                      |
-| `/blockchain/coinbase`           | Learn how coinbase transactions mint new tokens                |
-| `/public-private-key/keys`       | Generate ECC-based key pairs                                   |
-| `/public-private-key/signatures` | Sign and verify messages using keys                            |
-| `/public-private-key/transaction`| Simulate cryptographic blockchain transactions                 |
-| `/zero-knowledge-proof`          | Play with zero-knowledge proofs using map coloring             |
+
+| Path                              | Description                                        |
+| --------------------------------- | -------------------------------------------------- |
+| `/blockchain/block`               | View and modify a single block’s data and nonce    |
+| `/blockchain`                     | Explore a linked series of blocks (a blockchain)   |
+| `/blockchain/distributed`         | Simulate blockchains across multiple peers         |
+| `/blockchain/tokens`              | Visualize simple token-based transactions          |
+| `/blockchain/coinbase`            | Learn how coinbase transactions mint new tokens    |
+| `/public-private-key/keys`        | Generate ECC-based key pairs                       |
+| `/public-private-key/signatures`  | Sign and verify messages using keys                |
+| `/public-private-key/transaction` | Simulate cryptographic blockchain transactions     |
+| `/zero-knowledge-proof`           | Play with zero-knowledge proofs using map coloring |
 
 ---
 
@@ -69,6 +71,7 @@ This project is optimized for deployment on [Vercel](https://vercel.com/).
 ## 🤝 Contributing (Example)
 
 Contributions are welcome! Please follow these steps:
+
 1. Fork the repository.
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
@@ -79,7 +82,7 @@ Contributions are welcome! Please follow these steps:
 
 ## 🙏 Acknowledgements
 
-This project is inspired by and builds upon the foundational work of Anders Brownworth, particularly his original [blockchain demonstration](https://anders.com/blockchain/).
+This project is inspired by and builds upon the foundational work of Anders Brownworth, particularly his original [blockchain demonstration](https://andersbrownworth.com/blockchain).
 
 Further development, modernization, and contributions by Harhana Lakshara Fernando.
 
