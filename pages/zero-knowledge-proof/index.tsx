@@ -23,6 +23,7 @@ const BORDER_COLOR = 'var(--zkp-map-border-color)';
 const SELECTED_BORDER_COLOR = 'var(--zkp-map-selected-border-color)';
 const HOVER_COLOR = 'var(--zkp-map-hover-color)'; // For non-participating states
 const PRESSED_COLOR = 'var(--zkp-map-pressed-color)'; // For non-participating states
+const NEUTRAL_VISIBLE_COLOR = 'var(--zkp-map-neutral-visible-color)';
 
 
 // Hardcoded base 3-coloring for a subset of US States (using FIPS codes as IDs)
@@ -80,7 +81,7 @@ const ZeroKnowledgeProofPage: NextPage = () => {
         const permutedColorIndex = (baseColorIndex + currentOffset) % COLOR_PALETTE.length;
         return COLOR_PALETTE[permutedColorIndex];
       } else {
-        return HIDDEN_COLOR; // Non-participating states are hidden
+        return NEUTRAL_VISIBLE_COLOR; // Non-participating states get the neutral visible color
       }
     } else { // Logic when individual states are selected
       if (BASE_COLOR_INDICES.hasOwnProperty(stateId) && currentSelectedIds.includes(stateId)) {

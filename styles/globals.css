@@ -56,6 +56,7 @@
   --zkp-map-pressed-color: #BBBBBB;
   --zkp-map-container-bg: rgb(var(--callout-rgb));
   --zkp-map-container-border: var(--border-color-standard);
+  --zkp-map-neutral-visible-color: #e0e0e0; /* Light grey for non-participating states in light mode */
 }
 
 /* Dark theme variables, applied when html.theme-dark is present */
@@ -106,6 +107,7 @@ html.theme-dark {
   --zkp-map-pressed-color: #777777;
   --zkp-map-container-bg: rgb(var(--callout-rgb));
   --zkp-map-container-border: var(--border-color-standard);
+  --zkp-map-neutral-visible-color: #555555; /* Dark grey for non-participating states in dark mode */
 
   /* Logo filter changes for dark mode will be added here later */
 }
