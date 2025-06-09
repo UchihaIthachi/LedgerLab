@@ -1,0 +1,79 @@
+{
+  "coinbaseTutorial": {
+    "title": "Coinbase Transactions Tutorial",
+    "description": "Learn how coinbase transactions work and how new currency is minted.",
+    "sections": [
+      {
+        "id": "cb_s1_intro",
+        "title": "Introduction to Coinbase",
+        "steps": [
+          {
+            "id": "cb_s1_step1_what_is_coinbase",
+            "pagePath": "/blockchain/coinbase",
+            "title": "What is a Coinbase Transaction?",
+            "content": "In this demo, each block on each Peer's chain includes a special **Coinbase Transaction**. This 'mints' new currency and awards it to a miner (e.g., '$100 to Miner-A').\n\nWhen you click a block node (like Peer A's Block #1) to open its details, the first transaction listed is the coinbase transaction.",
+            "uiElementSelector": "div[data-block-id][role='button']", // General selector for any block node
+            "tryIt": {
+              "buttonText": "Show Peer A, Block 1 Details",
+              "actionType": "OPEN_BLOCK_MODAL",
+              "actionParams": {
+                "peerId": "Peer A",
+                "blockOrder": 0
+              }
+            }
+          },
+          {
+            "id": "cb_s1_step2_p2p_txs",
+            "pagePath": "/blockchain/coinbase",
+            "title": "Peer-to-Peer Transactions",
+            "content": "Besides the coinbase transaction, blocks also contain regular **Peer-to-Peer (P2P) Transactions**, like 'Miner-A sends $10 to Alice'. These transfer existing currency. You'll see these in the modal after the coinbase transaction.",
+            "uiElementSelector": ".ant-modal-body .ant-card-body .ant-card:nth-of-type(2)"
+          },
+          {
+            "id": "cb_s1_step3_edit_p2p_wb",
+            "pagePath": "/blockchain/coinbase",
+            "title": "Editing P2P Transactions",
+            "content": "Let's try editing a P2P transaction. This will invalidate the block. We'll open Peer A's first block and focus its first P2P transaction's 'To' field for you.",
+            "tryIt": {
+              "buttonText": "Edit Peer A, Block 1, P2P Tx 1 'To' field",
+              "actionType": "OPEN_BLOCK_MODAL_AND_FOCUS_P2P_TX",
+              "actionParams": {
+                "peerId": "Peer A",
+                "blockOrder": 0,
+                "p2pTxIndex": 0,
+                "fieldToFocus": "to"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "cb_s2_mining_coinbase",
+        "title": "Mining with Coinbase",
+        "steps": [
+          {
+            "id": "cb_s2_step1_impact_wb",
+            "pagePath": "/blockchain/coinbase",
+            "title": "Impact of Changes",
+            "content": "If you change any transaction (coinbase or P2P) or the nonce in the modal and apply those changes, the block's hash on the canvas will change, and its border will likely turn red, indicating it's invalid.",
+            "uiElementSelector": ".react-flow__node-coinbaseBlock[aria-selected='false'] .ant-card-bordered[style*='border-color: rgb(255, 77, 79);']"
+          },
+          {
+            "id": "cb_s2_step2_mine_block_wb",
+            "pagePath": "/blockchain/coinbase",
+            "title": "Re-Mining a Block",
+            "content": "To make an invalid block valid again, open its details (if not already open) and click 'Mine'. This finds a new nonce for the current data.",
+            "tryIt": {
+              "buttonText": "Mine Peer A's First Block",
+              "actionType": "OPEN_MODAL_AND_CLICK_MINE_WHITEBOARD",
+              "actionParams": {
+                "peerId": "Peer A",
+                "blockOrder": 0
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

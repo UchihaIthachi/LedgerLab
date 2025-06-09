@@ -1,109 +1,98 @@
-# Blockchain Demo
-A web-based demonstration of blockchain concepts.
+# ⚙️ LedgerLab
 
-[![Blockchain 101 - Demo](https://img.youtube.com/vi/_160oMzblY8/0.jpg)](https://www.youtube.com/watch?v=_160oMzblY8)
+**LedgerLab** is an interactive, educational platform that visually demonstrates core blockchain and cryptographic concepts through hands-on simulations. Built with [Next.js](https://nextjs.org/) and TypeScript, it helps users understand how blockchains work — from mining and immutability to digital signatures and zero-knowledge proofs.
 
-This is a very basic visual introduction to the concepts behind a blockchain. We introduce 
-the idea of an immutable ledger using an interactive web demo that is available here:
+Inspired by [Anders Brownworth’s blockchain demo](https://andersbrownworth.com/blockchain), this modernized version includes an expanded set of cryptographic modules, improved UI/UX, and a developer-friendly architecture for experimentation and learning.
 
-http://andersbrownworth.com/blockchain/
+---
 
-## Setup
-Get the code:
+## ✨ Features
 
-```
-git clone https://github.com/anders94/blockchain-demo.git
-```
+- ⛓️ **Blockchain Explorer** – Interact with a chain of blocks and learn about hashing, nonces, and immutability.
+- 🧮 **Mining Simulator** – Visualize how Proof-of-Work is used to validate blocks.
+- 🔐 **Key Generation** – Generate public/private key pairs using elliptic curve cryptography (`secp256k1`).
+- ✍️ **Digital Signatures** – Sign messages and transactions, and verify them using public keys.
+- 🕵️ **Zero-Knowledge Proofs (ZKP)** – Use the map-coloring game to explore knowledge proofs without revealing information.
+- 🔁 **Distributed Ledger View** – See how tampering in one peer's chain leads to consensus breakdown.
 
-Install dependencies:
+---
 
-```
-cd blockchain-demo
+## 🚀 Getting Started
+
+Clone the repository and start the development server:
+
+```bash
 npm install
-```
-Run the server:
-
-```
-npm start
-```
-
-OR
-
-```
-./bin/www
-```
-#For windows: if the above command didn't work, use this (make sure you have Node.js installed in your system):
-```
-node ./bin/www      
+npm run dev
+# or
+# yarn dev
+# or
+# pnpm dev
+# or
+# bun dev
 ```
 
-Point a web browser at the demo:
+Visit: http://localhost:3000
 
-```
-http://localhost:3000
-```
+### 🧪 Explore the Modules
 
-## Setup using Docker
+| Path                              | Description                                        |
+| --------------------------------- | -------------------------------------------------- |
+| `/blockchain/block`               | View and modify a single block’s data and nonce    |
+| `/blockchain`                     | Explore a linked series of blocks (a blockchain)   |
+| `/blockchain/distributed`         | Simulate blockchains across multiple peers         |
+| `/blockchain/tokens`              | Visualize simple token-based transactions          |
+| `/blockchain/coinbase`            | Learn how coinbase transactions mint new tokens    |
+| `/public-private-key/keys`        | Generate ECC-based key pairs                       |
+| `/public-private-key/signatures`  | Sign and verify messages using keys                |
+| `/public-private-key/transaction` | Simulate cryptographic blockchain transactions     |
+| `/zero-knowledge-proof`           | Play with zero-knowledge proofs using map coloring |
 
-Get the code:
+---
 
-```
-git clone https://github.com/anders94/blockchain-demo.git
-```
+## 🧱 Tech Stack
 
-Run the Docker setup:
+- **Next.js** – React-based frontend framework
+- **TypeScript** – Static typing for JavaScript
+- **Ant Design** – UI component library
+- **Framer Motion** – Animation library
+- **react-simple-maps** – Library for map visualizations
+- **elliptic.js** – ECC crypto library
+- **crypto-js** – Hashing library (includes SHA256)
 
-```
-cd blockchain-demo
-docker-compose up -d
-```
+---
 
-Point a web browser at the demo:
+## 📦 Deployment
 
-```
-http://localhost:3000
-```
+This project is optimized for deployment on [Vercel](https://vercel.com/).
 
-## Optional Configuration
-You can adjust the "number of zeros" required by the demo by editing the first two lines of
-`public/javascripts/blockchain.js`.
+---
 
-Because there are 16 possible characters in a hex value, each time you increment the difficulty
-by one you make the puzzle 16 times harder. In my testing, a difficulty of 6 requires a
-maximumNonce well over 500,000,000.
+## 🤝 Contributing (Example)
 
-If you adjust the difficulty above 4, blocks will show up as not mined because the demo data
-assumes 4 zeros for a signed block. For example, on the `http://localhost:3000/block` page
-with a difficulty of 6, the first nonce that works is `8719932` yielding a hash of
-`000000669445c22167511857d8f3b822b331c3342f25dfdcb326e35c1a7aa267`. This gets out of hand fairly
-quickly though. Here's some time estimates at the various thresholds.
+Contributions are welcome! Please follow these steps:
 
-|digits|nonce|time estimate|
-|------|-------|-------------|
-|4|500,000|15 minutes
-|5|8,000,000|4 hours
-|6|128,000,000|3 days
-|7|2,048,000,000|a month
-|8|32,768,000,000|2 years
-|9|524,288,000,000|30 years
-|10|8,388,608,000,000|481 years
-|11|134,217,728,000,000|7,690 years
-|12|2,147,483,648,000,000|123,036 years
-|13|34,359,738,368,000,000|1,968,581 years
-|14|549,755,813,888,000,000|31,497,291 years
-|15|8,796,093,022,208,000,000|503,956,662 years
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
 
-In the production bitcoin blockchain, block `458,091` has the hash digest
-`00000000000000000000011246f099d94f91628d71c9d75ad2f9a06e2beb7e92`. That's 21 zeros in a row!
-That one block would take this software approximately 8,454,989,768,407,765 years to mine.
+---
 
-### Public Private Key Demo
+## 🙏 Acknowledgements
 
-The 2nd part of the 101 session:
-* https://github.com/anders94/public-private-key-demo
+This project is inspired by and builds upon the foundational work of Anders Brownworth, particularly his original [blockchain demonstration](https://andersbrownworth.com/blockchain).
 
-## Send Thanks
+Further development, modernization, and contributions by Harhana Lakshara Fernando.
 
-![](public/images/qr.png)
+---
 
-Bitcoin gratefully accepted: `1K3NvcuZzVTueHW1qhkG2Cm3viRkh2EXJp`
+## 📘 Learn More
+
+- [Blockchain (Wikipedia)](https://en.wikipedia.org/wiki/Blockchain)
+- [Public-Key Cryptography](https://en.wikipedia.org/wiki/Public-key_cryptography)
+- [Digital Signatures](https://en.wikipedia.org/wiki/Digital_signature)
+- [Zero-Knowledge Proof](https://en.wikipedia.org/wiki/Zero-knowledge_proof)
+
+💡 Ideal for students, educators, and developers learning how blockchain works at a fundamental level.

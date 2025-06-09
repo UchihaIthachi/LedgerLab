@@ -1,0 +1,62 @@
+{
+  "distributedTutorial": {
+    "title": "Distributed Ledger Tutorial",
+    "description": "Learn how blockchains are managed across multiple peers.",
+    "sections": [
+      {
+        "id": "dist_s1_intro",
+        "title": "Multiple Peers",
+        "steps": [
+          {
+            "id": "dist_s1_step1",
+            "pagePath": "/blockchain/distributed",
+            "title": "Copies of the Chain",
+            "content": "In a distributed ledger, many computers (peers) keep a copy of the blockchain. This page shows three peers: Peer A, Peer B, and Peer C, each with an identical initial chain. You can scroll down to see each peer's independent chain visualization.",
+            "uiElementSelector": ".block-card-wrapper"
+          },
+          {
+            "id": "dist_s1_step2",
+            "pagePath": "/blockchain/distributed",
+            "title": "Isolated Changes",
+            "content": "Let's change data in a block on Peer A's chain. We'll open the details for Peer A's Block #2 and allow you to modify its data. Notice that only Peer A's chain will show this block as invalid (red) initially.",
+            "tryIt": {
+              "buttonText": "Tamper with Peer A, Block #2",
+              "actionType": "OPEN_MODAL_AND_FOCUS_DATA_WHITEBOARD",
+              "actionParams": {
+                "peerId": "Peer A",
+                "blockOrderInPeerChain": 1
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "dist_s2_divergence",
+        "title": "Chain Divergence",
+        "steps": [
+          {
+            "id": "dist_s2_step1",
+            "pagePath": "/blockchain/distributed",
+            "title": "Re-Mining on One Peer",
+            "content": "Now, mine Peer A's Block #2 (and any subsequent blocks on its chain, like Block #3, #4, #5) to make its entire chain valid again. Observe its final hash in the last block.",
+            "tryIt": {
+              "buttonText": "Mine Peer A's Block #2",
+              "actionType": "OPEN_MODAL_AND_CLICK_MINE_WHITEBOARD",
+              "actionParams": {
+                "peerId": "Peer A",
+                "blockOrderInPeerChain": 1
+              }
+            }
+          },
+          {
+            "id": "dist_s2_step2",
+            "pagePath": "/blockchain/distributed",
+            "title": "Comparing Chains",
+            "content": "After re-mining, Peer A's chain is valid, but its final hash (on its last block) will likely differ from the final hashes of Peer B and Peer C. This demonstrates how different 'versions of the truth' can arise in a distributed system without a consensus mechanism.",
+            "uiElementSelector": "div[data-peer-id='Peer B'] div[data-block-id]"
+          }
+        ]
+      }
+    ]
+  }
+}

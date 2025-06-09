@@ -1,0 +1,126 @@
+{
+  "blockchainTutorial": {
+    "title": "Blockchain Basics Tutorial",
+    "description": "An interactive guide to understanding core blockchain concepts.",
+    "sections": [
+      {
+        "id": "s1_blocks_intro",
+        "title": "1. Blocks",
+        "steps": [
+          {
+            "id": "s1_step1_what_is_a_block",
+            "pagePath": ["/block", "/blockchain"],
+            "title": "What is a Block?",
+            "content": "A block is a container for data. In a cryptocurrency, this data is mainly transactions. Each block also has a unique identifier (a **hash**) and the hash of the *previous* block. This linkage forms the 'chain'.\n\nIn this demo, blocks are visual units with fields for 'Block #', 'Nonce', 'Data', 'Prev', and 'Hash'.",
+            "uiElementSelector": ".react-flow__node[data-id^='block-1']"
+          },
+          {
+            "id": "s1_step2_single_block_view",
+            "pagePath": "/block",
+            "title": "Single Block View",
+            "content": "Go to the 'Single Block Demo' page ([/block](/block)). Here you can see a single block and manipulate its contents to understand its properties directly.",
+            "tryIt": {
+              "buttonText": "Go to Single Block Demo",
+              "actionType": "NAVIGATE_TO_PAGE",
+              "actionParams": { "path": "/block" }
+            }
+          },
+          {
+            "id": "s1_step3_blockchain_view",
+            "pagePath": "/blockchain",
+            "title": "Chain View",
+            "content": "On the 'Blockchain Demo' page ([/blockchain](/blockchain)), you see these blocks linked together in a chain.",
+            "uiElementSelector": ".react-flow__node"
+          }
+        ]
+      },
+      {
+        "id": "s2_hashes",
+        "title": "2. Hashes (SHA-256)",
+        "steps": [
+          {
+            "id": "s2_step1_digital_fingerprint",
+            "pagePath": ["/block", "/blockchain"],
+            "title": "Digital Fingerprint",
+            "content": "A hash (like SHA-256) is a unique digital fingerprint for data. A tiny change in data results in a completely different hash.\n\nEach block displays its calculated SHA-256 hash in the 'Hash' field."
+          },
+          {
+            "id": "s2_step2_try_changing_data",
+            "pagePath": "/block",
+            "content": "Try typing any character into the 'Data' field of the block on the 'Single Block Demo' page. Watch its 'Hash' value change instantly.",
+            "tryIt": {
+              "buttonText": "Focus Data Field on Single Block",
+              "actionType": "FOCUS_ELEMENT",
+              "actionParams": { "selector": "#single-block-data-textarea" }
+            },
+            "uiElementSelector": "#single-block-hash-field"
+          },
+          {
+            "id": "s2_step3_validity_highlight",
+            "pagePath": ["/block", "/blockchain"],
+            "title": "Hash Validity",
+            "content": "The demo highlights a block in green if its hash meets a certain criteria (e.g., starts with '0000'), indicating a 'valid' block. Otherwise, it's red, meaning it's 'invalid'."
+          }
+        ]
+      },
+      {
+        "id": "s3_chain_immutability",
+        "title": "3. The Chain & Immutability",
+        "steps": [
+          {
+            "id": "s3_step1_linking_hashes",
+            "pagePath": "/blockchain",
+            "title": "Linking with Hashes",
+            "content": "Each block (except the first, or 'genesis block') stores the hash of the previous block in its 'Prev' field. This is crucial as it creates the chronological and cryptographic link in the chain."
+          },
+          {
+            "id": "s3_step2_tamper_experiment",
+            "pagePath": "/blockchain",
+            "title": "Tamper Experiment",
+            "content": "Try changing the data in an earlier block in the chain (e.g., Block #2). Its own hash will change, invalidating it (it turns red). Since this hash was used as the 'Prev' hash in Block #3, Block #3 also becomes invalid, and so on. This cascading invalidation demonstrates the immutability of the blockchain.",
+            "tryIt": {
+              "buttonText": "Tamper with Block #2 Data",
+              "actionType": "OPEN_BLOCK_MODAL_AND_FOCUS_DATA",
+              "actionParams": { "blockSelector": "block-2" }
+            }
+          },
+          {
+            "id": "s3_step3_difficulty_of_alteration",
+            "pagePath": "/blockchain",
+            "title": "Difficulty of Alteration",
+            "content": "To make the chain valid again after tampering, you'd need to re-mine the altered block, then re-mine every subsequent block in the chain. This computational effort is what makes blockchains secure."
+          }
+        ]
+      },
+      {
+        "id": "s4_nonce_mining",
+        "title": "4. Nonce and Mining",
+        "steps": [
+          {
+            "id": "s4_step1_what_is_nonce",
+            "pagePath": ["/block", "/blockchain"],
+            "title": "What is a Nonce?",
+            "content": "A 'Nonce' (Number used ONCE) is a number that miners change to try and get a valid hash. Remember, a valid hash must meet specific criteria (e.g., start with '0000'). Since the block's data and previous hash are fixed, the nonce is the variable miners can adjust."
+          },
+          {
+            "id": "s4_step2_mining_process",
+            "pagePath": "/block",
+            "title": "The Mining Process",
+            "content": "Click the 'Mine' button on the 'Single Block Demo' page. The system will rapidly try different nonce values until it finds one that results in a valid hash (starting with '0000'). You'll see the 'Nonce' and 'Hash' fields update when a solution is found.",
+            "tryIt": {
+              "buttonText": "Mine the Single Block",
+              "actionType": "CLICK_ELEMENT",
+              "actionParams": { "selector": "#single-block-mine-button" }
+            }
+          },
+          {
+            "id": "s4_step3_mining_on_chain",
+            "pagePath": "/blockchain",
+            "title": "Mining in a Chain",
+            "content": "If you tamper with a block in the 'Blockchain Demo', you'll need to mine it to make it valid again. Then, you must re-mine each subsequent block because its 'Prev' hash (from the block you just mined) has changed."
+          }
+        ]
+      }
+    ]
+  }
+}
