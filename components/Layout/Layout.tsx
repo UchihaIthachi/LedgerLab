@@ -281,7 +281,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               cursor: "pointer",
             }}
           >
-            {collapsed ? t("BD_Short", "BD") : t("Blockchain Demo")}
+            {collapsed ? "LL" : "LedgerLab"}
           </div>
         </Link>
         <Menu

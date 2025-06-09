@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# LedgerLab
+
+LedgerLab is an interactive educational tool demonstrating blockchain concepts, built with [Next.js](https://nextjs.org/). This project was originally bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
 
@@ -32,6 +34,12 @@ To learn more about Next.js, take a look at the following resources:
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+
+## Acknowledgements
+
+This project is inspired by and builds upon the foundational work of Anders Brownworth, particularly his original blockchain demonstration.
+
+Further development, modernization, and contributions by Harhana Lakshara Fernando.
 
 ## Deploy on Vercel
 

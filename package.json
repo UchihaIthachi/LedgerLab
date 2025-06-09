@@ -1,5 +1,6 @@
 {
-  "name": "nextjs-blockchain-viewer",
+  "name": "ledgerlab",
+  "description": "LedgerLab: Interactive demonstrations of blockchain concepts.",
   "version": "0.1.0",
   "private": true,
   "scripts": {
