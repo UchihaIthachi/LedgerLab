@@ -46,10 +46,21 @@ const CoinbaseFlowNode: React.FC<CoinbaseFlowNodeProps> = ({ data }) => {
 
   return (
     // Use data['data-block-id'] which should be the original block.id for targeting
-    <div data-block-id={data['data-block-id']}>
+    <div
+      data-block-id={data['data-block-id']}
+      tabIndex={0}
+      className="custom-coinbase-node"
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          data.onClick();
+        }
+      }}
+      style={{ outline: 'none' }} // Remove default browser outline if custom :focus-visible is used
+    >
       <Handle type="target" position={Position.Left} style={{ background: token.colorBorder }} />
       <Card
-        hoverable
+        // hoverable // Can be removed if focus indication is primary
         size="small"
         style={{
           width: 200,

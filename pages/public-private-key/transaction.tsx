@@ -7,9 +7,11 @@ import { Tabs, Form, Input, Button, Alert, InputNumber, Row, Col, Typography } f
 import { ec as EC } from 'elliptic';
 import SHA256 from 'crypto-js/sha256';
 import { Buffer } from 'buffer';
+import { TransactionOutlined } from '@ant-design/icons'; // Added TransactionOutlined
+import CopyableText from '@/components/Common/CopyableText'; // Import CopyableText
 
 const { TabPane } = Tabs;
-const { Text } = Typography;
+const { Text, Title } = Typography; // Destructured Title
 
 // Initialize elliptic curve
 const ec = new EC('secp256k1');
@@ -217,7 +219,10 @@ const PKTransactionPage: NextPage = () => {
         <title>{String(t('TransactionSigningTitle', 'Transaction Signing'))} - {String(t('Blockchain Demo'))}</title>
       </Head>
       <div>
-        <h1>{t('TransactionSigningPageTitle', 'Public/Private Key - Transaction Signing')}</h1>
+        <Title level={1} style={{ marginBottom: '24px' }}>
+          <TransactionOutlined style={{ marginRight: '12px' }} />
+          {t('TransactionSigningPageTitle', 'Public/Private Key - Transaction Signing')}
+        </Title>
 
         <Row gutter={16} style={{ marginBottom: '20px' }}>
           <Col>
@@ -228,8 +233,11 @@ const PKTransactionPage: NextPage = () => {
         </Row>
         {publicKey && (
           <div style={{ marginBottom: '20px' }}>
-            <Text strong>{t('CurrentPublicKey', 'Current Public Key (Auto-filled in "From" fields)')}: </Text><Text code copyable>{publicKey}</Text><br/>
-            <Text strong>{t('CurrentPrivateKey', 'Current Private Key (Used for Signing)')}: </Text><Text code copyable>{generatedPrivateKey}</Text>
+            <Text strong>{t('CurrentPublicKey', 'Current Public Key (Auto-filled in "From" fields)')}: </Text>
+            <CopyableText textToCopy={publicKey} displayText={publicKey} />
+            <br/>
+            <Text strong>{t('CurrentPrivateKey', 'Current Private Key (Used for Signing)')}: </Text>
+            <CopyableText textToCopy={generatedPrivateKey} displayText={generatedPrivateKey} />
           </div>
         )}
 

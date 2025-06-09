@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { Card, Row, Col, Typography, theme } from 'antd'; // Added theme
-import { AppstoreOutlined, KeyOutlined, LockOutlined } from '@ant-design/icons'; // Using LockOutlined for ZKP
+import { AppstoreOutlined, KeyOutlined, LockOutlined, RocketOutlined } from '@ant-design/icons'; // Using LockOutlined for ZKP, Added RocketOutlined
 import { motion } from 'framer-motion';
 import GlossaryTerm from '@/components/Common/GlossaryTerm'; // Import GlossaryTerm
 
@@ -77,7 +77,8 @@ export default function Home(_props: InferGetStaticPropsType<typeof getStaticPro
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Title level={1} style={{ marginBottom: '16px' }}>
+            <Title level={1} style={{ marginBottom: '24px' }}> {/* Increased marginBottom */}
+              <RocketOutlined style={{ marginRight: '12px', color: token.colorPrimary }} /> {/* Added Icon */}
               {t('WelcomeMessage', 'Welcome to the Blockchain Demo')}
             </Title>
           </motion.div>

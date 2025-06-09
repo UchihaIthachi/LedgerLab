@@ -4,6 +4,7 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
 import { Form, Input, Button, Row, Col, Typography, Alert, Tabs, Space } from 'antd';
+import { SignatureOutlined } from '@ant-design/icons'; // Added SignatureOutlined
 import EC from 'elliptic';
 import CryptoJS from 'crypto-js'; // crypto-js is already a dependency from blockchain part
 import CopyableText from '@/components/Common/CopyableText';
@@ -167,7 +168,10 @@ const SignaturesPage: NextPage = () => {
         <title>{String(t('SignaturesTitle', 'Digital Signatures'))} - {String(t('Blockchain Demo'))}</title>
       </Head>
       <div>
-        <Title level={2}>{t('SignaturesPageTitle', 'Create & Verify Digital Signatures')}</Title>
+        <Title level={1} style={{ marginBottom: '24px' }}>
+          <SignatureOutlined style={{ marginRight: '12px' }} />
+          {t('SignaturesPageTitle', 'Create & Verify Digital Signatures')}
+        </Title>
         <Paragraph>
           {t('SignaturesPageDescription_part1', '')}
           <GlossaryTerm termKey="digital_signature" />

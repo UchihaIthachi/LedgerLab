@@ -5,7 +5,10 @@ import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
 import BlockCard from '@/components/Blockchain/BlockCard';
 import { calculateHash, checkValidity, DIFFICULTY, MAX_NONCE } from '@/lib/blockchainUtils'; // Import utilities
-import { Row, Col } from 'antd';
+import { Row, Col, Typography } from 'antd'; // Added Typography
+import { AppstoreOutlined } from '@ant-design/icons'; // Added AppstoreOutlined
+
+const { Title } = Typography; // Destructure Title
 
 const BlockPage: NextPage = () => {
   const { t } = useTranslation('common');
@@ -77,7 +80,10 @@ const BlockPage: NextPage = () => {
         <title>{String(t('Block', 'Block'))} - {String(t('Blockchain Demo'))}</title>
       </Head>
       <div>
-        <h1>{t('BlockViewTitle', 'Blockchain - Single Block View')}</h1>
+        <Title level={1} style={{ marginBottom: '24px' }}>
+          <AppstoreOutlined style={{ marginRight: '12px' }} />
+          {t('BlockViewTitle', 'Blockchain - Single Block View')}
+        </Title>
         <Row justify="center">
           <Col xs={24} sm={20} md={16} lg={12} xl={10}>
             <BlockCard

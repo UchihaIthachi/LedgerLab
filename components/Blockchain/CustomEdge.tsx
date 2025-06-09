@@ -34,8 +34,8 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
   const { isValid = true, isAnimating = false } = data || {};
 
   const edgeStyle = {
-    strokeWidth: isValid ? 3 : 2, // Thicker for valid, thinner for invalid/broken
-    stroke: isValid ? 'var(--color-success-border)' : 'var(--color-error-border)', // Using CSS Variables
+    strokeWidth: isValid ? 5 : 3, // Thicker for valid, thinner for invalid/broken
+    stroke: isValid ? 'url(#edgeGradientValid)' : 'var(--color-error-border)', // Using CSS Variables & new gradient
     ...(isAnimating && {
       animation: 'pulse 2s infinite',
     }),

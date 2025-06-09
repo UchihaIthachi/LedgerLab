@@ -34,12 +34,22 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
   };
 
   return (
-    <>
+    <div
+      tabIndex={0}
+      className="custom-flow-node"
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          data.onClick();
+        }
+      }}
+      style={{ outline: 'none' }} // Remove default browser outline if custom :focus-visible is used
+    >
       {/* Handles for incoming and outgoing connections */}
       <Handle type="target" position={Position.Left} style={{ background: token.colorBorder }} /> {/* Updated */}
       <Card
         data-block-id={data.id} // Added data-block-id for tutorial targeting
-        hoverable
+        // hoverable // Can be removed if focus indication is primary
         size="small"
         style={{
           width: 180,
@@ -51,7 +61,7 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
           justifyContent: 'space-between',
         }}
         bodyStyle={{ padding: '8px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}
-        onClick={data.onClick}
+        onClick={data.onClick} // Keep onClick for mouse users
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
           <Tooltip title={t('TooltipBlockNumber', 'This is the unique identifier for the block in the chain.')}>
@@ -121,7 +131,7 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
         )}
       </Card>
       <Handle type="source" position={Position.Right} style={{ background: token.colorBorder }} /> {/* Updated */}
-    </>
+    </div>
   );
 };
 

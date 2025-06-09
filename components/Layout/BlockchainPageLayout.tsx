@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { Tabs, Typography, Button } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'next-i18next';
+import { motion } from 'framer-motion'; // Import motion
 
 import { TutorialStep } from '@/types/tutorial';
 import MarkdownRenderer from '@/components/Common/MarkdownRenderer';
@@ -48,14 +49,19 @@ const BlockchainPageLayout: React.FC<BlockchainPageLayoutProps> = (props) => {
         <title>{pageTitle} - {String(t('BlockchainDemo', 'Blockchain Demo'))}</title>
       </Head>
       <div style={{ padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <Typography.Title level={2} style={{ margin: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }} // Applied margin here for the whole header row
+        >
+          <Typography.Title level={1} style={{ margin: 0 }}> {/* Changed level and removed specific margin from here */}
             {pageTitle}
           </Typography.Title>
           <Button icon={<QuestionCircleOutlined />} onClick={startTutorial}>
             {t('StartTutorial', 'Start Tutorial')}
           </Button>
-        </div>
+        </motion.div>
 
         <Tabs activeKey={activeTabKey} onChange={setActiveTabKey}>
           <Tabs.TabPane tab={t('InteractiveDemoTab', 'Interactive Demo')} key="1">

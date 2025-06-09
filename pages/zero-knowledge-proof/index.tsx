@@ -6,8 +6,9 @@ import { useTranslation } from 'next-i18next';
 import { Button, Row, Col, Space, Spin, Alert, Typography } from 'antd';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import { feature } from 'topojson-client';
+import { LockOutlined } from '@ant-design/icons'; // Added LockOutlined
 
-const { Text } = Typography;
+const { Text, Title } = Typography; // Destructured Title
 
 // TopoJSON data for US states
 const US_STATES_TOPOJSON_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
@@ -210,7 +211,10 @@ const ZeroKnowledgeProofPage: NextPage = () => {
         <meta name="description" content={String(t('ZKPPageMetaDescription', 'Learn about Zero-Knowledge Proofs with an interactive map coloring example.'))} />
       </Head>
       <div>
-        <h1>{t('ZeroKnowledgeProofPageTitle', 'Zero-Knowledge Proof: Map Coloring Problem')}</h1>
+        <Title level={1} style={{ marginBottom: '24px' }}>
+          <LockOutlined style={{ marginRight: '12px' }} />
+          {t('ZeroKnowledgeProofPageTitle', 'Zero-Knowledge Proof: Map Coloring Problem')}
+        </Title>
         <p>{t('ZKPPageDescription', 'This page demonstrates a simplified Zero-Knowledge Proof using map 3-coloring. The Prover (this system) knows a valid 3-coloring for a subset of US states. It will try to convince you (the Verifier) of this knowledge without revealing the entire coloring scheme at once.')}</p>
         <p>{t('ZKPInstructions', 'Instructions: Click on up to two states to reveal their (permuted) colors. If they are adjacent and part of the demo, they should have different colors. "Shuffle Colors" changes the permutation. "Show/Hide Colors" reveals or hides the coloring for all participating states.')}</p>
 
@@ -245,6 +249,14 @@ const ZeroKnowledgeProofPage: NextPage = () => {
                           <Geography
                             key={geo.rsmKey}
                             geography={geo}
+                            tabIndex={0}
+                            className="zkp-state-geography"
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                handleStateClick(geo);
+                              }
+                            }}
                             fill={stateColors[stateId] || HIDDEN_COLOR}
                             stroke={isSelected ? SELECTED_BORDER_COLOR : BORDER_COLOR}
                             strokeWidth={isSelected ? 2 : 0.5}

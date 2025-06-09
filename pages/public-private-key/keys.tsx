@@ -4,6 +4,7 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
 import { Form, Input, Button, Row, Col, Typography, Alert, Space } from 'antd';
+import { KeyOutlined } from '@ant-design/icons'; // Added KeyOutlined
 import EC from 'elliptic';
 import CopyableText from '@/components/Common/CopyableText';
 import GlossaryTerm from '@/components/Common/GlossaryTerm'; // Import GlossaryTerm
@@ -65,7 +66,10 @@ const KeysPage: NextPage = () => {
         <title>{String(t('KeysTitle', 'Public/Private Keys'))} - {String(t('Blockchain Demo'))}</title>
       </Head>
       <div>
-        <Title level={2}>{t('KeysPageTitle', 'Generate Public/Private Key Pair')}</Title>
+        <Title level={1} style={{ marginBottom: '24px' }}>
+          <KeyOutlined style={{ marginRight: '12px' }} />
+          {t('KeysPageTitle', 'Generate Public/Private Key Pair')}
+        </Title>
         <Paragraph>
           {t('KeysPageDescription_part1', 'A ')}
           <GlossaryTerm termKey="private_key" />

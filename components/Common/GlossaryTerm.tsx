@@ -21,6 +21,8 @@ const GlossaryTerm: React.FC<GlossaryTermProps> = ({ termKey, children }) => {
   return (
     <Tooltip title={definition}>
       <Text
+        tabIndex={0}
+        className="glossary-term-text"
         style={{
           borderBottom: '1px dotted currentColor',
           cursor: 'help',

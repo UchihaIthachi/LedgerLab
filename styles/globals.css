@@ -57,6 +57,12 @@
   --zkp-map-container-bg: rgb(var(--callout-rgb));
   --zkp-map-container-border: var(--border-color-standard);
   --zkp-map-neutral-visible-color: #e0e0e0; /* Light grey for non-participating states in light mode */
+
+  /* Chain Connector Styling */
+  --chain-link-color-valid: #4A5568; /* A cool gray */
+  --chain-link-gradient-start: #A0AEC0; /* Lighter part of gradient */
+  --chain-link-gradient-end: #4A5568;   /* Darker part of gradient, matches solid color */
+  --chain-arrowhead-color-valid: #4A5568;
 }
 
 /* Dark theme variables, applied when html.theme-dark is present */
@@ -109,8 +115,39 @@ html.theme-dark {
   --zkp-map-container-border: var(--border-color-standard);
   --zkp-map-neutral-visible-color: #555555; /* Dark grey for non-participating states in dark mode */
 
+  /* Chain Connector Styling */
+  --chain-link-color-valid: #A0AEC0; /* Lighter gray for dark mode */
+  --chain-link-gradient-start: #718096;
+  --chain-link-gradient-end: #A0AEC0;
+  --chain-arrowhead-color-valid: #A0AEC0;
+
   /* Logo filter changes for dark mode will be added here later */
 }
+
+/* Custom Flow Node Focus Styling */
+.custom-flow-node:focus-visible,
+.custom-coinbase-node:focus-visible {
+  outline: 2px solid var(--ant-primary-color-outline, var(--ant-primary-color)); /* Fallback to --ant-primary-color if outline specific var not set */
+  outline-offset: 2px;
+  border-radius: var(--border-radius); /* Consistent with card's border-radius */
+}
+
+/* ZKP Map State Geography Focus Styling */
+.zkp-state-geography:focus-visible {
+  outline: 2px solid var(--ant-primary-color-outline, var(--ant-primary-color));
+  outline-offset: 1px; /* Adjust as needed for SVG */
+  /* Alternatively, if fill/stroke needs to change: */
+  /* stroke: var(--ant-primary-color-outline, var(--ant-primary-color)); */
+  /* stroke-width: 2.5px; */ /* Make it slightly thicker than selected */
+}
+
+/* Glossary Term Focus Styling */
+.glossary-term-text:focus-visible {
+  outline: 2px solid var(--ant-primary-color-outline, var(--ant-primary-color));
+  outline-offset: 2px;
+  /* border-bottom-style: solid; */ /* Optional: make underline solid on focus */
+}
+
 
 * {
   box-sizing: border-box;
