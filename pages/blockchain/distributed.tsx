@@ -12,7 +12,10 @@ import {
   Button as AntButton,
   Modal, // Still used for Modal.confirm
   Button,
+  Tooltip, // Added Tooltip
+  theme, // Added theme
 } from "antd";
+import { CheckCircleTwoTone, WarningTwoTone } from '@ant-design/icons'; // Added icons
 // Removed icons that are now internal to sub-components or layout
 import 'reactflow/dist/style.css'; // Keep global styles for ReactFlow
 
@@ -41,6 +44,7 @@ interface Peer {
 
 const DistributedPage: NextPage = () => {
   const { t } = useTranslation('common');
+  const { token } = theme.useToken(); // Added for theme token access
   const router = useRouter();
   const [peers, setPeers] = useState<Peer[]>([]);
   const [miningStates, setMiningStates] = useState<{ [key: string]: boolean }>({});
@@ -317,13 +321,23 @@ const DistributedPage: NextPage = () => {
       onExecuteTutorialAction={handleExecuteTutorialAction}
     >
       <Row gutter={[16, 24]}>
-        {peers.map((peer) => (
-          <Col key={peer.peerId} span={24} className="block-card-wrapper">
-            <Typography.Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
-              {t(peer.peerId, peer.peerId)}
-            </Typography.Title>
-            <PeerChainVisualization
-              peerId={peer.peerId}
+        {peers.map((peer) => {
+          const isChainValid = peer.chain.every(block => block.isValid);
+          const iconStyle: React.CSSProperties = { fontSize: '16px', marginLeft: '8px', verticalAlign: 'middle' };
+          return (
+            <Col key={peer.peerId} span={24} className="block-card-wrapper">
+              <Typography.Title level={4} style={{ textAlign: "center", marginBottom: '16px' }}>
+                {t(peer.peerId, peer.peerId)}
+                <Tooltip title={isChainValid ? t('PeerChainStatus_Valid') : t('PeerChainStatus_Invalid')}>
+                  {isChainValid ? (
+                    <CheckCircleTwoTone twoToneColor={token.colorSuccess} style={iconStyle} />
+                  ) : (
+                    <WarningTwoTone twoToneColor={token.colorError} style={iconStyle} />
+                  )}
+                </Tooltip>
+              </Typography.Title>
+              <PeerChainVisualization
+                peerId={peer.peerId}
               chain={peer.chain}
               nodeType="genericBlock"
               miningStates={miningStates}

@@ -152,5 +152,7 @@
   "glossary_previous_hash_def": "The hash of the preceding block in the blockchain, linking the current block to it.",
   "TryingNonce": "Trying Nonce",
   "CurrentHashAttempt": "Current Hash Attempt",
-  "NoTransactionsInBlock": "No transactions in this block."
+  "NoTransactionsInBlock": "No transactions in this block.",
+  "PeerChainStatus_Valid": "Chain Valid",
+  "PeerChainStatus_Invalid": "Chain Contains Invalid Blocks"
 }
