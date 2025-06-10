@@ -37,8 +37,12 @@ const SvgDefsComponent = ({ token }: { token: ReturnType<typeof theme.useToken>[
         viewBox="-0 -5 10 10" refX="10" refY="0"
         markerWidth="7" markerHeight="7" orient="auto-start-reverse"
       >
-        <path d="M 0 -5 L 10 0 L 0 5 z" fill={token.colorSuccess} />
+        <path d="M 0 -5 L 10 0 L 0 5 z" fill="var(--chain-arrowhead-color-valid)" />
       </marker>
+      <linearGradient id="edgeGradientValid" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style={{stopColor: 'var(--chain-link-gradient-start)', stopOpacity: 1}} />
+        <stop offset="100%" style={{stopColor: 'var(--chain-link-gradient-end)', stopOpacity: 1}} />
+      </linearGradient>
       <marker
         id="arrowhead-invalid"
         viewBox="-0 -5 10 10" refX="10" refY="0"

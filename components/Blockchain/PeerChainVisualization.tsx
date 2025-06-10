@@ -38,7 +38,7 @@ const SvgDefsComponent = ({ token }: { token: ReturnType<typeof theme.useToken>[
       <marker
         id="arrowhead-valid"
         viewBox="-0 -5 10 10" refX="10" refY="0"
-        markerWidth="9" markerHeight="9" orient="auto-start-reverse"
+        markerWidth="7" markerHeight="7" orient="auto-start-reverse"
       >
         <path d="M 0 -5 L 10 0 L 0 5 z" fill="var(--chain-arrowhead-color-valid)" />
       </marker>
