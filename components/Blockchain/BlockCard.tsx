@@ -111,14 +111,14 @@ const BlockCard: React.FC<BlockCardProps> = ({
                 <Descriptions bordered column={1} size="small" style={{ wordBreak: 'break-all' }}>
                   {tx.id && (
                     <Descriptions.Item label={t('TransactionID', 'ID')}>
-                      <CopyableText textToCopy={tx.id} displayText={`${tx.id.substring(0, 6)}...${tx.id.substring(tx.id.length - 4)}`} />
+                      <CopyableText textToCopy={String(tx.id)} displayText={`${String(tx.id).substring(0, 6)}...${String(tx.id).substring(String(tx.id).length - 4)}`} />
                     </Descriptions.Item>
                   )}
                   <Descriptions.Item label={t('From', 'From')}>
-                    <CopyableText textToCopy={tx.from} displayText={tx.from} />
+                    <CopyableText textToCopy={String(tx.from)} displayText={String(tx.from)} />
                   </Descriptions.Item>
                   <Descriptions.Item label={t('To', 'To')}>
-                    <CopyableText textToCopy={tx.to} displayText={tx.to} />
+                    <CopyableText textToCopy={String(tx.to)} displayText={String(tx.to)} />
                   </Descriptions.Item>
                   <Descriptions.Item label={t('Value', 'Value')}>{tx.value.toString()}</Descriptions.Item>
                 </Descriptions>
