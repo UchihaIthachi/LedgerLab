@@ -50,40 +50,7 @@ const DistributedPage: NextPage = () => {
   const [selectedBlockInfo, setSelectedBlockInfo] = useState<SelectedBlockInfo | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  useEffect(() => {
-    const newPeersData: Peer[] = peerIds.map(id => {
-      const newChain: BlockType[] = [];
-      let previousHash = '0'.repeat(64);
-      for (let i = 0; i < initialChainLength; i++) {
-        const blockNumber = i + 1;
-        const data = `Block ${blockNumber} Data for ${id}`;
-        const nonce = PRECALCULATED_NONCES_DISTRIBUTED[i] !== undefined ? PRECALCULATED_NONCES_DISTRIBUTED[i] : undefined;
-        const block = createInitialBlock(blockNumber, data, previousHash, nonce, undefined);
-        newChain.push(block);
-        previousHash = block.currentHash;
-      }
-      return { peerId: id, chain: newChain };
-    });
-    setPeers(newPeersData);
-  }, []);
-
-  useEffect(() => {
-    if (selectedBlockInfo) {
-      const { peerId, block: currentSelectedBlock } = selectedBlockInfo;
-      const peer = peers.find(p => p.peerId === peerId);
-      if (peer) {
-        const updatedBlockInChain = peer.chain.find(b => b.id === currentSelectedBlock.id);
-        if (updatedBlockInChain && JSON.stringify(updatedBlockInChain) !== JSON.stringify(currentSelectedBlock)) {
-          setSelectedBlockInfo({ peerId, block: updatedBlockInChain });
-        } else if (!updatedBlockInChain) {
-            handleModalClose();
-        }
-      } else {
-         handleModalClose();
-      }
-    }
-  }, [peers, selectedBlockInfo, handleModalClose]);
-
+  // Define Callbacks first
   const showBlockModal = useCallback((peerId: string, block: BlockType) => {
     setSelectedBlockInfo({ peerId, block });
     setIsModalVisible(true);
@@ -238,7 +205,7 @@ const DistributedPage: NextPage = () => {
     });
   }, [t]);
 
-  const executeDistributedActionLogic = (actionType: string, actionParams?: any) => {
+  const executeDistributedActionLogic = useCallback((actionType: string, actionParams?: any) => {
     switch (actionType) {
       case 'NAVIGATE_TO_PAGE':
         if (actionParams?.path) {
@@ -297,12 +264,46 @@ const DistributedPage: NextPage = () => {
       default:
         console.warn(`Unknown actionType for Distributed tutorial: ${actionType}`);
     }
-  };
+  }, [router, peers, selectedBlockInfo, showBlockModal]);
 
   const handleExecuteTutorialAction = (actionType: string, actionParams?: any) => {
     console.log('Distributed Tutorial Action:', actionType, actionParams);
     executeDistributedActionLogic(actionType, actionParams);
   };
+
+  useEffect(() => {
+    const newPeersData: Peer[] = peerIds.map(id => {
+      const newChain: BlockType[] = [];
+      let previousHash = '0'.repeat(64);
+      for (let i = 0; i < initialChainLength; i++) {
+        const blockNumber = i + 1;
+        const data = `Block ${blockNumber} Data for ${id}`;
+        const nonce = PRECALCULATED_NONCES_DISTRIBUTED[i] !== undefined ? PRECALCULATED_NONCES_DISTRIBUTED[i] : undefined;
+        const block = createInitialBlock(blockNumber, data, previousHash, nonce, undefined);
+        newChain.push(block);
+        previousHash = block.currentHash;
+      }
+      return { peerId: id, chain: newChain };
+    });
+    setPeers(newPeersData);
+  }, []); // Initial chain setup
+
+  useEffect(() => {
+    if (selectedBlockInfo) {
+      const { peerId, block: currentSelectedBlock } = selectedBlockInfo;
+      const peer = peers.find(p => p.peerId === peerId);
+      if (peer) {
+        const updatedBlockInChain = peer.chain.find(b => b.id === currentSelectedBlock.id);
+        if (updatedBlockInChain && JSON.stringify(updatedBlockInChain) !== JSON.stringify(currentSelectedBlock)) {
+          setSelectedBlockInfo({ peerId, block: updatedBlockInChain });
+        } else if (!updatedBlockInChain) {
+            handleModalClose(); // Defined above
+        }
+      } else {
+         handleModalClose(); // Defined above
+      }
+    }
+  }, [peers, selectedBlockInfo, handleModalClose]); // handleModalClose is now defined above
 
   return (
     <BlockchainPageLayout
