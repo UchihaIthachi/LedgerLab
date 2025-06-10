@@ -3,21 +3,18 @@ import { NextPage } from "next";
 import { useRouter } from 'next/router';
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useTranslation } from "next-i18next";
-// Removed Head, Tabs, Space, Input, QuestionCircleOutlined, MarkdownRenderer, TutorialDisplay, TutorialStep, BlockCard
-// Also removing internal flow components like FlowNodeBlock, CustomEdge, and ReactFlow specific imports
 import {
   Row,
   Col,
   Typography,
   Button as AntButton,
-  Modal, // Still used for Modal.confirm
+  Modal,
   Button,
-  Tooltip, // Added Tooltip
-  theme, // Added theme
+  Tooltip,
+  theme,
 } from "antd";
-import { CheckCircleTwoTone, WarningTwoTone } from '@ant-design/icons'; // Added icons
-// Removed icons that are now internal to sub-components or layout
-import 'reactflow/dist/style.css'; // Keep global styles for ReactFlow
+import { CheckCircleTwoTone, WarningTwoTone } from '@ant-design/icons';
+import 'reactflow/dist/style.css';
 
 import PeerChainVisualization from '@/components/Blockchain/PeerChainVisualization';
 import BlockDetailModal from '@/components/Blockchain/BlockDetailModal';
@@ -30,8 +27,6 @@ import {
   createInitialBlock,
   updateChainCascading,
 } from "@/lib/blockchainUtils";
-// TutorialStep might not be needed if executeDistributedActionLogic doesn't use it for params.
-// import { TutorialStep } from '@/types/tutorial';
 
 const initialChainLength = 5;
 const peerIds = ['Peer A', 'Peer B', 'Peer C'];
@@ -44,7 +39,7 @@ interface Peer {
 
 const DistributedPage: NextPage = () => {
   const { t } = useTranslation('common');
-  const { token } = theme.useToken(); // Added for theme token access
+  const { token } = theme.useToken();
   const router = useRouter();
   const [peers, setPeers] = useState<Peer[]>([]);
   const [miningStates, setMiningStates] = useState<{ [key: string]: boolean }>({});
@@ -55,11 +50,7 @@ const DistributedPage: NextPage = () => {
   const [selectedBlockInfo, setSelectedBlockInfo] = useState<SelectedBlockInfo | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // Removed state: activeTabKey, theoryContent, theoryIsLoading, theoryError,
-  // isTutorialVisible, tutorialSteps, currentTutorialKey, allTutorialData
-
   useEffect(() => {
-    // Initial peer chain setup remains.
     const newPeersData: Peer[] = peerIds.map(id => {
       const newChain: BlockType[] = [];
       let previousHash = '0'.repeat(64);
@@ -91,7 +82,7 @@ const DistributedPage: NextPage = () => {
          handleModalClose();
       }
     }
-  }, [peers, selectedBlockInfo]); // Added handleModalClose to dependencies if it's memoized, though not strictly needed for setter from useState
+  }, [peers, selectedBlockInfo, handleModalClose]);
 
   const showBlockModal = useCallback((peerId: string, block: BlockType) => {
     setSelectedBlockInfo({ peerId, block });
@@ -101,7 +92,7 @@ const DistributedPage: NextPage = () => {
   const handleModalClose = useCallback(() => {
     setIsModalVisible(false);
     setSelectedBlockInfo(null);
-    setCurrentMiningPeerAttemptNonce(null); // Clear attempts on modal close
+    setCurrentMiningPeerAttemptNonce(null);
     setCurrentMiningPeerAttemptHash(null);
   }, []);
 
@@ -152,9 +143,9 @@ const DistributedPage: NextPage = () => {
     const miningKey = `${peerId}-${blockToMine.id}`;
 
     setMiningStates(prev => ({ ...prev, [miningKey]: true }));
-    setCurrentMiningPeerAttemptNonce(0); // Initialize
+    setCurrentMiningPeerAttemptNonce(0);
     setCurrentMiningPeerAttemptHash(calculateHash(blockToMine.blockNumber, 0, blockToMine.data, blockToMine.previousHash, undefined));
-    await new Promise(resolve => setTimeout(resolve, 50)); // UI update
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     let foundNonce = blockToMine.nonce;
     for (let i = 0; i <= MAX_NONCE; i++) {
@@ -162,12 +153,12 @@ const DistributedPage: NextPage = () => {
         blockToMine.blockNumber, i,
         blockToMine.data,
         blockToMine.previousHash,
-        undefined // No coinbase for generic blocks
+        undefined
       );
-      if (i % 200 === 0) { // Update UI periodically
+      if (i % 200 === 0) {
         setCurrentMiningPeerAttemptNonce(i);
         setCurrentMiningPeerAttemptHash(hashAttempt);
-        await new Promise(resolve => setTimeout(resolve, 0)); // Yield
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
       if (checkValidity(hashAttempt)) {
         foundNonce = i;
@@ -190,7 +181,7 @@ const DistributedPage: NextPage = () => {
       return p;
     }));
     setMiningStates(prev => ({ ...prev, [miningKey]: false }));
-    setCurrentMiningPeerAttemptNonce(null); // Clear after mining
+    setCurrentMiningPeerAttemptNonce(null);
     setCurrentMiningPeerAttemptHash(null);
   }, [selectedBlockInfo]);
 
@@ -338,15 +329,16 @@ const DistributedPage: NextPage = () => {
               </Typography.Title>
               <PeerChainVisualization
                 peerId={peer.peerId}
-              chain={peer.chain}
-              nodeType="genericBlock"
-              miningStates={miningStates}
-              onShowBlockModal={(block) => showBlockModal(peer.peerId, block)}
-              onAddBlock={() => addBlockToPeerChain(peer.peerId)}
-              onResetChain={() => handleResetPeerChain(peer.peerId)}
-            />
-          </Col>
-        ))}
+                chain={peer.chain}
+                nodeType="genericBlock"
+                miningStates={miningStates}
+                onShowBlockModal={(block) => showBlockModal(peer.peerId, block)}
+                onAddBlock={() => addBlockToPeerChain(peer.peerId)}
+                onResetChain={() => handleResetPeerChain(peer.peerId)}
+              />
+            </Col>
+          );
+        })}
       </Row>
       {selectedBlockInfo && (
         <BlockDetailModal

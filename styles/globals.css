@@ -50,13 +50,13 @@
   --zkp-map-palette-2: #6BCB77;
   --zkp-map-palette-3: #4D96FF;
   --zkp-map-hidden-color: rgba(0,0,0,0.1);
-  --zkp-map-border-color: #FFFFFF;
-  --zkp-map-selected-border-color: #F5A623;
+  --zkp-map-border-color: #434343; /* Changed for contrast */
+  --zkp-map-selected-border-color: #096DD9; /* Changed for contrast - AntD Blue-7 */
   --zkp-map-hover-color: #DDDDDD;
   --zkp-map-pressed-color: #BBBBBB;
   --zkp-map-container-bg: rgb(var(--callout-rgb));
   --zkp-map-container-border: var(--border-color-standard);
-  --zkp-map-neutral-visible-color: #e0e0e0; /* Light grey for non-participating states in light mode */
+  --zkp-map-neutral-visible-color: #D9D9D9; /* Changed for contrast - AntD Grey-4 */
 
   /* Chain Connector Styling */
   --chain-link-color-valid: #4A5568; /* A cool gray */
@@ -107,8 +107,8 @@ html.theme-dark {
   --zkp-map-palette-2: #81C784; /* Lighter Green */
   --zkp-map-palette-3: #64B5F6; /* Lighter Blue */
   --zkp-map-hidden-color: rgba(255,255,255,0.15);
-  --zkp-map-border-color: rgba(255,255,255,0.3);
-  --zkp-map-selected-border-color: #FFB74D; /* Lighter Orange */
+  --zkp-map-border-color: #D9D9D9; /* Changed for contrast - AntD Grey-4 (same as light neutral fill) */
+  --zkp-map-selected-border-color: #FFD666; /* Changed for contrast - AntD Yellow-5 */
   --zkp-map-hover-color: #555555;
   --zkp-map-pressed-color: #777777;
   --zkp-map-container-bg: rgb(var(--callout-rgb));
