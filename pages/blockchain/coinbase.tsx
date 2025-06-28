@@ -130,13 +130,19 @@ const CoinbasePage: NextPage = () => {
         const coinbaseTx = getInitialCoinbase(blockNumber, peerInitial);
         const p2pTxs = getInitialP2PTransactions(blockNumber, peerInitial);
         const nonce = PRECALCULATED_NONCES[i] !== undefined ? PRECALCULATED_NONCES[i] : undefined;
-        const block = createCoinbaseBlock(blockNumber, coinbaseTx, p2pTxs, previousHash, nonce);
+        // Corrected argument order: p2pTxs is 'data', coinbaseTx is 'coinbase'
+        const block = createCoinbaseBlock(blockNumber, p2pTxs, previousHash, nonce, coinbaseTx);
         newChain.push(block);
         previousHash = block.currentHash;
       }
       return { peerId: id, chain: newChain };
     });
     setPeers(newPeers);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setIsModalVisible(false);
+    setSelectedBlockInfo(null);
   }, []);
 
   useEffect(() => {
@@ -154,16 +160,11 @@ const CoinbasePage: NextPage = () => {
          handleModalClose();
       }
     }
-  }, [peers, selectedBlockInfo]);
+  }, [peers, selectedBlockInfo, handleModalClose]);
 
   const showBlockModal = useCallback((peerId: string, block: BlockType) => {
     setSelectedBlockInfo({ peerId, block });
     setIsModalVisible(true);
-  }, []);
-
-  const handleModalClose = useCallback(() => {
-    setIsModalVisible(false);
-    setSelectedBlockInfo(null);
   }, []);
 
   const handleNonceChange = useCallback((newNonceValue: string | number | null | undefined) => {
@@ -198,9 +199,11 @@ const CoinbasePage: NextPage = () => {
     let foundNonce = blockToMine.nonce;
     for (let i = 0; i <= MAX_NONCE; i++) {
       const hash = calculateCoinbaseBlockHash(
-        blockToMine.blockNumber, i, blockToMine.coinbase,
-        Array.isArray(blockToMine.data) ? blockToMine.data as TransactionType[] : [],
-        blockToMine.previousHash
+        blockToMine.blockNumber, // blockNumber
+        i, // nonce
+        Array.isArray(blockToMine.data) ? blockToMine.data as TransactionType[] : [], // data
+        blockToMine.previousHash, // previousHash
+        blockToMine.coinbase // coinbase (optional)
       );
       if (checkCoinbaseValidity(hash)) {
         foundNonce = i;
@@ -284,9 +287,10 @@ const CoinbasePage: NextPage = () => {
         const peerInitial = pId.replace('Peer ', '');
         const newBlock = createCoinbaseBlock(
           newBlockNumber,
-          getInitialCoinbase(newBlockNumber, peerInitial),
-          getInitialP2PTransactions(newBlockNumber, peerInitial),
-          previousHash
+          getInitialP2PTransactions(newBlockNumber, peerInitial), // p2pTxs (data)
+          previousHash, // previousHash
+          undefined, // nonce (optional, let createCoinbaseBlock handle it or set explicitly if needed)
+          getInitialCoinbase(newBlockNumber, peerInitial) // coinbaseTx
         );
         return { ...p, chain: [...p.chain, newBlock] };
       }
@@ -312,7 +316,8 @@ const CoinbasePage: NextPage = () => {
                   const coinbaseTx = getInitialCoinbase(blockNumber, peerInitial);
                   const p2pTxs = getInitialP2PTransactions(blockNumber, peerInitial);
                   const nonce = PRECALCULATED_NONCES[i] !== undefined ? PRECALCULATED_NONCES[i] : undefined;
-                  const block = createCoinbaseBlock(blockNumber, coinbaseTx, p2pTxs, previousHash, nonce);
+                  // Corrected argument order
+                  const block = createCoinbaseBlock(blockNumber, p2pTxs, previousHash, nonce, coinbaseTx);
                   newInitialChain.push(block);
                   previousHash = block.currentHash;
                 }

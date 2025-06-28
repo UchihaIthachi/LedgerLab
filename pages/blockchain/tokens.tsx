@@ -122,6 +122,13 @@ const TokensPage: NextPage = () => {
     setPeers(newPeersData);
   }, []);
 
+  const handleModalClose = useCallback(() => {
+    setIsModalVisible(false);
+    setSelectedBlockInfo(null);
+    setCurrentMiningPeerAttemptNonce(null); // Clear attempts on modal close
+    setCurrentMiningPeerAttemptHash(null);
+  }, []);
+
   useEffect(() => {
     if (selectedBlockInfo) {
       const { peerId, block: currentSelectedBlock } = selectedBlockInfo;
@@ -137,18 +144,11 @@ const TokensPage: NextPage = () => {
          handleModalClose();
       }
     }
-  }, [peers, selectedBlockInfo]); // Added handleModalClose for robustness, ensure it's memoized
+  }, [peers, selectedBlockInfo, handleModalClose]);
 
   const showBlockModal = useCallback((peerId: string, block: BlockType) => {
     setSelectedBlockInfo({ peerId, block });
     setIsModalVisible(true);
-  }, []);
-
-  const handleModalClose = useCallback(() => {
-    setIsModalVisible(false);
-    setSelectedBlockInfo(null);
-    setCurrentMiningPeerAttemptNonce(null); // Clear attempts on modal close
-    setCurrentMiningPeerAttemptHash(null);
   }, []);
 
   const handleNonceChangeInModal = useCallback((newNonceValue: string | number | null | undefined) => {
