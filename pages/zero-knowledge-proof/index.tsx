@@ -6,6 +6,7 @@ import { useTranslation } from 'next-i18next';
 import { Button, Row, Col, Space, Spin, Alert, Typography } from 'antd';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import { feature } from 'topojson-client';
+import { FeatureCollection } from 'geojson'; // Added import
 import { LockOutlined } from '@ant-design/icons'; // Added LockOutlined
 
 const { Text, Title } = Typography; // Destructured Title
@@ -38,17 +39,8 @@ const NEUTRAL_VISIBLE_COLOR = 'var(--zkp-map-neutral-visible-color)';
 // Pennsylvania (42): 1 (Adjacent to NY(0))
 // Ohio (39): 2 (Adjacent to PA(1))
 const BASE_COLOR_INDICES: Record<string, number> = {
-  '06': 0, '32': 1, '04': 2, // CA, NV, AZ
-  '41': 2, // OR (Changed from 1 to 2 to be different from CA(0) and NV(1)) -> Let's try with a valid 3-coloring assumption.
-            // For a proper 3-coloring demo, a real graph coloring algorithm would be needed for the whole map.
-            // For this ZKP demo, we only "prove" knowledge for states we have in this map.
-            // Let's simplify and ensure chosen adjacent states have different colors.
-            // CA (06) -> 0
-            // NV (32) -> 1 (adj CA)
-            // AZ (04) -> 2 (adj CA, NV)
-            // OR (41) -> 1 (adj CA, NV(conflict with NV if OR is 1 and NV is 1 and they are adj))
-            // WA (53) -> 0 (adj OR)
-  // Simplified for demo:
+  // Definitions from the "Simplified for demo" section are kept.
+  // The duplicate keys '06', '32', '04', '41', '53' that appeared before this section have been removed.
   '06': 0, // California
   '32': 1, // Nevada
   '04': 2, // Arizona
@@ -114,7 +106,8 @@ const ZeroKnowledgeProofPage: NextPage = () => {
         return;
     }
 
-    const features = feature(mapData, statesObject).features;
+    const geoJsonData = feature(mapData, statesObject) as unknown as FeatureCollection; // Updated type assertion
+    const features = geoJsonData.features;
     const initialColors: Record<string, string> = {};
     features.forEach((geo: any) => {
         initialColors[geo.id] = getDisplayColor(geo.id, colorOffset, showAllMapColors, selectedStateIds);
@@ -152,7 +145,8 @@ const ZeroKnowledgeProofPage: NextPage = () => {
         return;
     }
 
-    const features = feature(mapData, statesObject).features;
+    const geoJsonData = feature(mapData, statesObject) as unknown as FeatureCollection; // Updated type assertion
+    const features = geoJsonData.features;
     const newColors: Record<string, string> = {};
     features.forEach((geo: any) => { // geo.id should be the state FIPS code
         newColors[geo.id] = getDisplayColor(geo.id, newOffset, revealAll, currentSelectedIds);

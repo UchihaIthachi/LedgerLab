@@ -253,7 +253,7 @@ const PKTransactionPage: NextPage = () => {
                 name="amount_sign"
                 rules={[{ required: true, message: t('PleaseInputAmount', 'Please input the amount!') }]}
               >
-                <InputNumber style={{ width: '100%' }} min={0} step="0.01" stringMode value={signAmount} onChange={(val) => setSignAmount(String(val))} />
+                <InputNumber style={{ width: '100%' }} min="0" step="0.01" stringMode value={signAmount} onChange={(val) => setSignAmount(String(val))} />
               </Form.Item>
               <Form.Item
                 label={t('FromPublicKey', 'From (Public Key)')}
@@ -293,7 +293,7 @@ const PKTransactionPage: NextPage = () => {
                 name="amount_verify"
                 rules={[{ required: true, message: t('PleaseInputAmount', 'Please input the amount!') }]}
               >
-                <InputNumber style={{ width: '100%' }} min={0} step="0.01" stringMode value={verifyAmount} onChange={(val) => setVerifyAmount(String(val))} />
+                <InputNumber style={{ width: '100%' }} min="0" step="0.01" stringMode value={verifyAmount} onChange={(val) => setVerifyAmount(String(val))} />
               </Form.Item>
               <Form.Item
                 label={t('FromPublicKey', 'From (Public Key)')}
