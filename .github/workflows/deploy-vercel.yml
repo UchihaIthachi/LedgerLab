@@ -3,7 +3,7 @@ name: Deploy to Vercel
 on:
   push:
     branches:
-      - deploy # Trigger deployment on push to the 'deploy' branch
+      - deploy # Change to your preferred deployment branch
 
 jobs:
   deploy:
@@ -15,7 +15,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18' # Or your project's Node.js version
+          node-version: "22" # Matches Vercel's nodeVersion
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
