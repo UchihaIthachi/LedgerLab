@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Layout as AntLayout, Menu, Dropdown, Button, Space, ConfigProvider, theme, Switch } from "antd"; // Added Space, ConfigProvider, theme, Switch
+import {
+  Layout as AntLayout,
+  Menu,
+  Dropdown,
+  Button,
+  Space,
+  ConfigProvider,
+  theme,
+  Switch,
+} from "antd"; // Added Space, ConfigProvider, theme, Switch
 import PwaInstallBanner from "../PWA/PwaInstallBanner"; // Import the banner
 import NetworkStatusIndicator from "../Common/NetworkStatusIndicator"; // Import NetworkStatusIndicator
 import {
@@ -90,9 +99,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   // Theme persistence useEffect
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
+    const savedTheme = localStorage.getItem("theme");
     if (savedTheme) {
-      setIsDarkMode(savedTheme === 'dark');
+      setIsDarkMode(savedTheme === "dark");
     } else {
       // Default to light theme if no preference is found
       setIsDarkMode(false);
@@ -100,15 +109,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') { // Ensure localStorage is available
-      localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    if (typeof window !== "undefined") {
+      // Ensure localStorage is available
+      localStorage.setItem("theme", isDarkMode ? "dark" : "light");
       // Add/remove theme classes on documentElement
       if (isDarkMode) {
-        document.documentElement.classList.add('theme-dark');
-        document.documentElement.classList.remove('theme-light');
+        document.documentElement.classList.add("theme-dark");
+        document.documentElement.classList.remove("theme-light");
       } else {
-        document.documentElement.classList.add('theme-light');
-        document.documentElement.classList.remove('theme-dark');
+        document.documentElement.classList.add("theme-light");
+        document.documentElement.classList.remove("theme-dark");
       }
     }
   }, [isDarkMode]);
@@ -233,18 +243,25 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const openSubMenuKeys = menuItems
     .filter(
-      (item) =>
-        item &&
-        item.children &&
-        item.children.some(
-          (child) => child && pathname.startsWith(child.key as string)
-        )
+      (item): item is Extract<MenuItemType, { children: MenuItemType[] }> =>
+        !!item && "children" in item && Array.isArray(item.children)
     )
-    .map((item) => item?.key as string);
+    .filter((item) =>
+      item.children.some(
+        (child) => !!child && pathname.startsWith(child.key as string)
+      )
+    )
+    .map((item) => item.key as string);
 
   // If on a top-level path that is also a submenu key, ensure it's open
   if (
-    menuItems.some((item) => item && item.key === pathname && item.children)
+    menuItems.some(
+      (item): item is Extract<MenuItemType, { children: MenuItemType[] }> =>
+        !!item &&
+        item.key === pathname &&
+        "children" in item &&
+        Array.isArray(item.children)
+    )
   ) {
     if (!openSubMenuKeys.includes(pathname)) {
       openSubMenuKeys.push(pathname);
@@ -264,94 +281,105 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       <AntLayout style={{ minHeight: "100vh" }}>
         <Sider
           collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-      >
-        <Link href="/" passHref>
-          <div
-            style={{
-              height: "32px",
-              margin: "16px",
-              background: "rgba(255, 255, 255, 0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
-          >
-            {collapsed ? "LL" : "LedgerLab"}
-          </div>
-        </Link>
-        <Menu
-          theme="dark"
-          selectedKeys={[selectedKey]}
-          defaultOpenKeys={openSubMenuKeys} // Use this for dynamically opening based on current path
-          mode="inline"
-          items={menuItems}
-          onClick={handleMenuClick}
-        />
-      </Sider>
-      <AntLayout className="site-layout">
-        <Header
-          style={{
-            padding: "0 16px",
-            background: "var(--header-background)",
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            borderBottom: '1px solid var(--border-color-standard)', // Added
-          }}
+          collapsed={collapsed}
+          onCollapse={(value) => setCollapsed(value)}
         >
-          <Space>
-            <NetworkStatusIndicator />
-            <Button
-              onClick={toggleTheme}
-              icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
-              title={isDarkMode ? t('switchToLightMode', 'Switch to Light Mode') : t('switchToDarkMode', 'Switch to Dark Mode')}
-              type="text"
-              style={{ marginRight: '8px' }} // Adjusted margin slightly
-            />
-            <Dropdown
-              menu={{
-                items: languageMenuItems,
-                onClick: handleLanguageMenuClick,
+          <Link href="/" passHref>
+            <div
+              style={{
+                height: "32px",
+                margin: "16px",
+                background: "rgba(255, 255, 255, 0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                borderRadius: "6px",
+                cursor: "pointer",
               }}
-              placement="bottomRight"
             >
-              <Button icon={<GlobalOutlined />}>
-                {currentLocale
-                  ? languageMap[currentLocale] || currentLocale.toUpperCase()
-                  : ""}
-              </Button>
-            </Dropdown>
-          </Space>
-        </Header>
-        <Content style={{ margin: "0 16px" }}>
-          <div
+              {collapsed ? "LL" : "LedgerLab"}
+            </div>
+          </Link>
+          <Menu
+            theme="dark"
+            selectedKeys={[selectedKey]}
+            defaultOpenKeys={openSubMenuKeys} // Use this for dynamically opening based on current path
+            mode="inline"
+            items={menuItems}
+            onClick={handleMenuClick}
+          />
+        </Sider>
+        <AntLayout className="site-layout">
+          <Header
             style={{
-              padding: 24,
-              minHeight: 360,
-              background: "var(--content-background)",
-              marginTop: 16,
-              borderRadius: 'var(--border-radius)', // Added
+              padding: "0 16px",
+              background: "var(--header-background)",
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              borderBottom: "1px solid var(--border-color-standard)", // Added
             }}
           >
-            {children}
-          </div>
-        </Content>
-        <Footer style={{ textAlign: "center", borderTop: '1px solid var(--border-color-standard)' }}> {/* Added borderTop */}
-          {t("FooterText", "Blockchain Demo Reimagined")} ©
-          {new Date().getFullYear()}
-        </Footer>
+            <Space>
+              <NetworkStatusIndicator />
+              <Button
+                onClick={toggleTheme}
+                icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
+                title={
+                  isDarkMode
+                    ? t("switchToLightMode", "Switch to Light Mode")
+                    : t("switchToDarkMode", "Switch to Dark Mode")
+                }
+                type="text"
+                style={{ marginRight: "8px" }} // Adjusted margin slightly
+              />
+              <Dropdown
+                menu={{
+                  items: languageMenuItems,
+                  onClick: handleLanguageMenuClick,
+                }}
+                placement="bottomRight"
+              >
+                <Button icon={<GlobalOutlined />}>
+                  {currentLocale
+                    ? languageMap[currentLocale] || currentLocale.toUpperCase()
+                    : ""}
+                </Button>
+              </Dropdown>
+            </Space>
+          </Header>
+          <Content style={{ margin: "0 16px" }}>
+            <div
+              style={{
+                padding: 24,
+                minHeight: 360,
+                background: "var(--content-background)",
+                marginTop: 16,
+                borderRadius: "var(--border-radius)", // Added
+              }}
+            >
+              {children}
+            </div>
+          </Content>
+          <Footer
+            style={{
+              textAlign: "center",
+              borderTop: "1px solid var(--border-color-standard)",
+            }}
+          >
+            {" "}
+            {/* Added borderTop */}
+            {t("FooterText", "Blockchain Demo Reimagined")} ©
+            {new Date().getFullYear()}
+          </Footer>
+        </AntLayout>
+        <PwaInstallBanner
+          isVisible={showInstallPromptBanner}
+          onInstall={handlePwaInstall}
+          onDismiss={handlePwaDismiss}
+        />
       </AntLayout>
-      <PwaInstallBanner
-        isVisible={showInstallPromptBanner}
-        onInstall={handlePwaInstall}
-        onDismiss={handlePwaDismiss}
-      />
-    </AntLayout>
     </ConfigProvider>
   );
 };

@@ -271,21 +271,22 @@ const BlockCard: React.FC<BlockCardProps> = ({
           <CopyableText textToCopy={currentHash} displayText={currentHash} />
         </Form.Item>
         <Form.Item>
-          <Button
-            type="primary"
-            onClick={onMine}
-            loading={isMining}
-            block
-            tooltip={{
-              title: t(
-                "MineButtonTooltip",
-                "Click to find a new nonce that makes this block's hash valid (starts with '0000')."
-              ),
-            }}
-            data-testid="mine-button-in-modal" // Added for tutorial targeting
+          <Tooltip
+            title={t(
+              "MineButtonTooltip",
+              "Click to find a new nonce that makes this block's hash valid (starts with '0000')."
+            )}
           >
-            {t("Mine", "Mine")}
-          </Button>
+            <Button
+              type="primary"
+              onClick={onMine}
+              loading={isMining}
+              block
+              data-testid="mine-button-in-modal"
+            >
+              {t("Mine", "Mine")}
+            </Button>
+          </Tooltip>
         </Form.Item>
       </Form>
     </Card>
