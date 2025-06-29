@@ -1,0 +1,27 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  checks:
+    uses: ./.github/workflows/common-checks.yml
+
+  deploy-preview:
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy to Vercel Preview
+        run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Notify Telegram
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="🧪 Preview deploy created for PR #${{ github.event.pull_request.number }}"
+
+      # Optional: Comment Vercel preview URL back on PR
