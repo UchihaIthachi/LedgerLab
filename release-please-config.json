@@ -1,0 +1,9 @@
+{
+  "packages": {
+    "packages/my-package": {
+      "release-type": "node",
+      "pull-request-title-pattern": "chore: release ${component} ${version}",
+      "include-component-in-tag": true
+    }
+  }
+}
