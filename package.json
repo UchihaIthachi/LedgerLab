@@ -52,6 +52,7 @@
   "overrides": {
     "ajv": "^8.17.1",
     "ajv-keywords": "^5.1.0",
-    "json-schema-traverse": "^1.0.0"
+    "json-schema-traverse": "^1.0.0",
+    "d3-selection": "3.0.0"
   }
 }
