@@ -119,6 +119,16 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   const { token } = theme.useToken(); // Get theme tokens
 
   useEffect(() => {
+    // Re-apply: Delay fitView call to ensure the viewport and D3 elements are fully initialized
+    if (nodes.length > 0) {
+      const timer = setTimeout(() => {
+        fitView({ padding: 0.1, duration: 300 });
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [fitView, nodes, edges]); // Rerun if fitView, nodes, or edges change
+
+  useEffect(() => {
     const newNodes: Node<FlowNodeBlockData>[] = chain.map((block, index) => ({
       id: block.id,
       type: "blockNode", // Custom node type
@@ -188,7 +198,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
         onConnect={onConnect}
         nodeTypes={nodeTypes} // Pass nodeTypes
         edgeTypes={edgeTypes} // Pass edgeTypes
-        fitView // fitView prop restored
+        // fitView prop removed again for workaround
       >
         <Controls />
         <Background color={token.colorBorder} gap={16} />{" "}

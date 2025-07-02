@@ -125,6 +125,16 @@ const InnerCanvasAndControls: React.FC<PeerChainVisualizationProps> = (
   >([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdgeData>([]);
 
+  useEffect(() => {
+    // Re-apply: Delay fitView call to ensure the viewport and D3 elements are fully initialized
+    if (nodes.length > 0) {
+      const timer = setTimeout(() => {
+        fitView({ padding: 0.2, duration: 200 }); // Use padding from previous fitViewOptions
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [fitView, nodes, edges]);
+
   const nodeTypes = useMemo(
     () => ({
       coinbaseBlock: CoinbaseFlowNode,
@@ -276,8 +286,8 @@ const InnerCanvasAndControls: React.FC<PeerChainVisualizationProps> = (
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        fitView // fitView prop restored
-        fitViewOptions={{ padding: 0.2 }} // fitViewOptions prop restored
+        // fitView prop removed again for workaround
+        // fitViewOptions prop removed again for workaround
         proOptions={{ hideAttribution: true }} // Hide React Flow attribution
       >
         <Controls showInteractive={false} />{" "}
