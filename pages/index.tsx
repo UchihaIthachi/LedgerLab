@@ -112,7 +112,7 @@ export default function Home(_props: InferGetStaticPropsType<typeof getStaticPro
                     <Card
                       hoverable
                       style={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%' }}
-                      bodyStyle={{ flexGrow: 1 }}
+                      styles={{ body: { flexGrow: 1 } }}
                       title={
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                           {section.icon}

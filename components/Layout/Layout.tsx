@@ -59,6 +59,7 @@ interface AppLayoutProps {
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { t } = useTranslation("common");
   const [collapsed, setCollapsed] = useState(false);
+  const [isClient, setIsClient] = useState(false); // State to track client-side rendering
   const [isDarkMode, setIsDarkMode] = useState(false); // Theme state
   const router = useRouter();
   const { locale: currentLocale, locales, pathname, query, asPath } = router;
@@ -122,6 +123,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       }
     }
   }, [isDarkMode]);
+
+  // Effect to set isClient to true after mount
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handlePwaInstall = async () => {
     if (installPromptEvent) {
@@ -321,33 +327,35 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               borderBottom: "1px solid var(--border-color-standard)", // Added
             }}
           >
-            <Space>
-              <NetworkStatusIndicator />
-              <Button
-                onClick={toggleTheme}
-                icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
-                title={
-                  isDarkMode
-                    ? t("switchToLightMode", "Switch to Light Mode")
-                    : t("switchToDarkMode", "Switch to Dark Mode")
-                }
-                type="text"
-                style={{ marginRight: "8px" }} // Adjusted margin slightly
-              />
-              <Dropdown
-                menu={{
-                  items: languageMenuItems,
-                  onClick: handleLanguageMenuClick,
-                }}
-                placement="bottomRight"
-              >
-                <Button icon={<GlobalOutlined />}>
-                  {currentLocale
-                    ? languageMap[currentLocale] || currentLocale.toUpperCase()
-                    : ""}
-                </Button>
-              </Dropdown>
-            </Space>
+            {isClient && ( // Conditionally render the Space component
+              <Space>
+                <NetworkStatusIndicator />
+                <Button
+                  onClick={toggleTheme}
+                  icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
+                  title={
+                    isDarkMode
+                      ? t("switchToLightMode", "Switch to Light Mode")
+                      : t("switchToDarkMode", "Switch to Dark Mode")
+                  }
+                  type="text"
+                  style={{ marginRight: "8px" }} // Adjusted margin slightly
+                />
+                <Dropdown
+                  menu={{
+                    items: languageMenuItems,
+                    onClick: handleLanguageMenuClick,
+                  }}
+                  placement="bottomRight"
+                >
+                  <Button icon={<GlobalOutlined />}>
+                    {currentLocale
+                      ? languageMap[currentLocale] || currentLocale.toUpperCase()
+                      : ""}
+                  </Button>
+                </Dropdown>
+              </Space>
+            )}
           </Header>
           <Content style={{ margin: "0 16px" }}>
             <div

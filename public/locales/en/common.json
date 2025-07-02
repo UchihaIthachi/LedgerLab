@@ -154,5 +154,6 @@
   "CurrentHashAttempt": "Current Hash Attempt",
   "NoTransactionsInBlock": "No transactions in this block.",
   "PeerChainStatus_Valid": "Chain Valid",
-  "PeerChainStatus_Invalid": "Chain Contains Invalid Blocks"
+  "PeerChainStatus_Invalid": "Chain Contains Invalid Blocks",
+  "ZKPPageDescription": "Learn about Zero-Knowledge Proofs using an interactive map coloring example to prove knowledge without revealing secrets."
 }

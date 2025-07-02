@@ -60,7 +60,7 @@ const FlowNodeBlock: React.FC<FlowNodeBlockProps> = ({ data }) => {
           flexDirection: 'column',
           justifyContent: 'space-between',
         }}
-        bodyStyle={{ padding: '8px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}
+        styles={{ body: { padding: '8px', flexGrow: 1, display: 'flex', flexDirection: 'column' } }}
         onClick={data.onClick} // Keep onClick for mouse users
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>

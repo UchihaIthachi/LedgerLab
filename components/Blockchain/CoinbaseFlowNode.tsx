@@ -82,12 +82,14 @@ const CoinbaseFlowNode: React.FC<CoinbaseFlowNodeProps> = ({ data }) => {
             : token.colorErrorBorder,
           borderWidth: "2px",
         }}
-        bodyStyle={{
-          padding: "8px",
-          minHeight: "110px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
+        styles={{
+          body: {
+            padding: "8px",
+            minHeight: "110px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+          }
         }} // Ensure consistent height
         onClick={data.onClick}
         title={

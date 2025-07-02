@@ -42,7 +42,7 @@ const CompactBlockCard: React.FC<CompactBlockCardProps> = ({
         flexDirection: 'column',
         justifyContent: 'space-between',
       }}
-      bodyStyle={{ padding: '12px', flexGrow: 1, display: 'flex', flexDirection: 'column' }} // Changed padding from 8px to 12px
+      styles={{ body: { padding: '12px', flexGrow: 1, display: 'flex', flexDirection: 'column' } }} // Changed padding from 8px to 12px
       onClick={onClick}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>

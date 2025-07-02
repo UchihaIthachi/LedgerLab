@@ -71,7 +71,7 @@ const TutorialDisplay: React.FC<TutorialDisplayProps> = ({
         zIndex: 1050, // Higher zIndex to be above most elements, but less than modals if needed
         // boxShadow: '0 4px 12px rgba(0,0,0,0.15)', // Removed to allow AntD theme shadow
       }}
-      bodyStyle={{padding: '16px'}}
+      styles={{ body: {padding: '16px'} }}
     >
       <div style={{ marginBottom: '16px', maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }} className="tutorial-content-markdown"> {/* Added a class */}
         <ReactMarkdown>{currentStep.content}</ReactMarkdown>
