@@ -2,7 +2,7 @@ name: Deploy to Develop (Staging)
 
 on:
   push:
-    branches: [develop]
+    branches: [ci-cd]
 
 jobs:
   run-checks:
