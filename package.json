@@ -48,5 +48,10 @@
     "prettier": "^3.5.3",
     "ts-jest": "^29.3.4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "ajv": "^8.17.1",
+    "ajv-keywords": "^5.1.0",
+    "json-schema-traverse": "^1.0.0"
   }
 }
